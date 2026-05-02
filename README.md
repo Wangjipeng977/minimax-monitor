@@ -2,9 +2,21 @@
 
 实时仪表盘，监控 MiniMax API 套餐使用情况，支持配额、速率探针、本周用量追踪。
 
-![Dashboard](https://img.shields.io/badge/Node.js-18%2B-green) ![Dashboard](demo.png)
+> **当前版本：v1.1.0** | [更新日志](#更新日志)
+
+![Dashboard](demo.png)
 
 ![License](https://img.shields.io/badge/License-MIT-blue)
+
+---
+
+## 更新日志
+
+### v1.1.0（2026-05-02）
+- 🆕 **标签页自动刷新**：切换回浏览器标签时，自动触发一次配额和速率数据刷新，不再依赖定时轮询
+
+### v1.0.0（2026-04-26）
+- 初始版本，支持配额仪表盘 + 速率探针 + 飞书推送
 
 ---
 
@@ -61,9 +73,9 @@ open mmx-monitor.html
 cp .env.example .env
 
 # 填写以下变量
-MINIMAX_API_KEY=sk-cp-your-key-here      # MiniMax API Key（Token Plan 类型）
+MINIMAX_API_KEY=sk-cp-…here      # MiniMax API Key（Token Plan 类型）
 FEISHU_APP_ID=your-app-id                 # 飞书应用 App ID
-FEISHU_APP_SECRET=your-app-secret        # 飞书应用 App Secret
+FEISHU_APP_SECRET=***        # 飞书应用 App Secret
 FEISHU_CHAT_ID=your-chat-id               # 飞书群 ID
 ```
 
@@ -80,6 +92,7 @@ FEISHU_CHAT_ID=your-chat-id               # 飞书群 ID
 | `mmx-monitor.html` | 监控页面（纯前端，单文件 HTML） |
 | `mmx-monitor-server.js` | 本地代理服务（Node.js，端口 9876） |
 | `mmx_quota_feishu.py` | 飞书推送脚本（可选） |
+| `demo.png` | 监控页面截图 |
 | `README.md` | 本文件 |
 | `LICENSE` | MIT 开源协议 |
 
