@@ -2,7 +2,9 @@
 
 实时仪表盘，监控 MiniMax API 套餐使用情况，支持配额、速率探针、本周用量追踪。
 
-![Dashboard](https://img.shields.io/badge/Node.js-18%2B-green) ![License](https://img.shields.io/badge/License-MIT-blue)
+![Dashboard](https://img.shields.io/badge/Node.js-18%2B-green) ![Dashboard](demo.png)
+
+![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
 
