@@ -120,11 +120,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .lat-bar-fill{height:100%;border-radius:2px}
 .lat-val{font-family:"Roboto Mono",monospace;font-size:10px;color:rgba(255,255,255,0.8);width:42px;text-align:right;flex-shrink:0}
 
-.footer{display:flex;justify-content:space-between;align-items:center;padding:10px 28px;margin:0 28px 12px;border-radius:50px;background:rgba(48,48,56,0.82);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-size:12px;color:rgba(255,255,255,0.9)}
-.footer-status{display:flex;align-items:center;gap:7px}
-.footer-dot{width:6px;height:6px;border-radius:50%;background:#00e676;animation:blink 1.5s infinite}
-.footer-time{font-family:"Roboto Mono",monospace;font-size:12px;color:rgba(255,255,255,0.7)}
-.main-grid{display:grid;grid-template-columns:210px 1fr 248px;gap:6px;padding:0 28px 12px;align-items:stretch}
+.main-grid{display:grid;grid-template-columns:210px 1fr 248px;gap:6px;padding:0 28px 20px;align-items:stretch}
 
 </style>
 </head>
@@ -153,7 +149,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 </div>
 <div class="main-grid">
   <div class="left-panel">
-    <div class="glass-card left-gauge-card">
+    <div class="glass-card left-gauge-card" style="flex:1;margin:8px 0;display:flex;flex-direction:column;overflow:hidden">
       <svg class="gauge-svg" viewBox="-5 -5 200 145">
         
         <path id="gTrack" class="gauge-track" d="M 22 105 A 82 82 0 1 1 178 105" pathLength="100"/>
@@ -170,13 +166,13 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
     </div>
   </div>
   <div class="middle-panel">
-    <div class="glass-card" style="flex:none;height:100%;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="glass-card" style="flex:1;margin:8px 0;display:flex;flex-direction:column;overflow:hidden">
       <div class="section-header">M 模型配额详情</div>
       <div class="model-grid" id="modelGrid"></div>
     </div>
   </div>
   <div class="right-panel">
-    <div class="glass-card" id="rateCard">
+    <div class="glass-card" id="rateCard" style="flex:1;margin:8px 0;display:flex;flex-direction:column;overflow:hidden">
       <div class="panel-header"><div class="live-dot"></div> 速率监控</div>
       <div class="rate-group"><div class="rate-group-title">SEQ-10 顺序测试</div>
         <div class="rate-row"><span class="rate-lbl">成功/总计</span><span class="rate-val green" id="seqOk">--/--</span></div>
@@ -199,10 +195,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
     </div>
   </div>
 </div>
-<div class="footer">
-  <div class="footer-status"><div class="footer-dot"></div><span>实时监控中</span></div>
-  <div class="footer-time" id="serverTime">--:--:--</div>
-</div>
+
 <script>
 (function(){
   var API_BASE='http://localhost:9877';
@@ -218,7 +211,6 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
   function drawTicks(){var g=document.getElementById('gTicks'),cx=100,cy=105;for(var d=-120;d<=120;d+=20){var r=(d-90)*Math.PI/180;var line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',cx+68*Math.cos(r));line.setAttribute('y1',cy+68*Math.sin(r));line.setAttribute('x2',cx+76*Math.cos(r));line.setAttribute('y2',cy+76*Math.sin(r));line.setAttribute('stroke','rgba(255,255,255,0.15)');line.setAttribute('stroke-width','1.5');g.appendChild(line);}}
   function updateKeyDots(){var el=document.getElementById('keyDots');if(!apiKey){el.innerHTML='<span class="key-placeholder">未设置 API Key</span>';return;}var n=Math.min(apiKey.length,40),html='';for(var i=0;i<n;i++)html+='<span class="key-dot"></span>';el.innerHTML=html;}
   function saveApiKey(){var raw=document.getElementById('apiKeyInput').value.trim();apiKey=raw;localStorage.setItem('mmx_api_key',apiKey);startMon();}
-  function updateClock(){document.getElementById('serverTime').textContent=new Date().toLocaleTimeString('zh-CN');}
   function startMon(){if(tickId)clearInterval(tickId);tickId=setInterval(tick,1000);fetchQuota();doSpeedTest();}
   function showError(msg){var el=document.getElementById('errorBanner');document.getElementById('errorMsg').textContent=msg;el.style.display='block';}
   function tick(){for(var k in timers)if(k!=='reset')timers[k]=Math.max(0,timers[k]-1);document.getElementById('stripRefresh').textContent=fmt(timers.refresh);document.getElementById('stripSpeed').textContent=fmt(timers.speed);document.getElementById('stripReset').textContent=timers.reset>0?'剩余 '+fmt(timers.reset):'已重置';if(timers.refresh<=0){timers.refresh=REFRESH_INT;fetchQuota();}if(timers.speed<=0){timers.speed=SPEED_INT;doSpeedTest();}}
@@ -258,8 +250,6 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
   });
   document.addEventListener('DOMContentLoaded', function(){
     
-    setInterval(updateClock,1000);
-    updateClock();
     document.getElementById('btnSave').onclick=function(){var raw=document.getElementById('apiKeyInput').value.trim();if(raw){apiKey=raw;localStorage.setItem('mmx_api_key',apiKey);}startMon();};
     startMon();
   });
