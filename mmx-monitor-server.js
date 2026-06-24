@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const HTTPS = require('https');
 
-const PORT = 9876;
+const PORT = 9877;  // v1.3.0: 错开 9876 (minimax-embedding-adapter)
 const MMX_CONFIG = path.join(process.env.HOME, '.mmx', 'config.json');
 
 // ── Read mmx API key ─────────────────────────────────────
@@ -19,26 +19,7 @@ function getReqKey(req) {
   return req.headers['x-mmx-api-key'] || getMmxKey();
 }
 
-function runMmx(args, apiKey) {
-  try {
-    const env = { ...process.env };
-    if (apiKey) env.MMX_API_KEY = apiKey;
-    const out = execSync(`mmx ${args}`, { timeout: 15000, encoding: 'utf8', env });
-    return out.trim();
-  } catch (e) {
-    return null;
-  }
-}
 
-function runMmxAsync(args, apiKey) {
-  return new Promise((resolve) => {
-    const env = { ...process.env };
-    if (apiKey) env.MMX_API_KEY = apiKey;
-    exec(`mmx ${args}`, { timeout: 20000, encoding: 'utf8', env }, (e, out) => {
-      resolve(e ? null : out.trim());
-    });
-  });
-}
 
 function parseJson(raw) {
   try { return JSON.parse(raw); } catch { return null; }
@@ -73,7 +54,7 @@ const MODEL_NAME_MAP = {
   'MiniMax-M*':             'MiniMax-M2.7',
   'speech-hd':              'Text to Speech HD',
   'MiniMax-Hailuo-2.3-Fast-6s-768p': 'Hailuo-2.3-Fast-768P',
-  'MiniMax-Hailuo-2.3-6s-768p':     'Hailuo-2.0-Pro-HD',
+  'MiniMax-Hailuo-2.3-6s-768p':     'Hailuo-2.3-768P',
   'music-2.5':              'Music-2.5',
   'music-2.6':              'Music-2.6',
   'music-cover':            'Music-Cover',
@@ -81,6 +62,7 @@ const MODEL_NAME_MAP = {
   'image-01':               'Image-01',
   'coding-plan-vlm':        'Coding-VLM',
   'coding-plan-search':     'Coding-Search',
+  'video':                  '海螺视频',
 };
 
 function is4HourWindow(entry) {
@@ -90,22 +72,47 @@ function is4HourWindow(entry) {
 
 function buildModels(remains) {
   if (!remains || !Array.isArray(remains)) return [];
+  // v1.2.0: 官方改为只返"剩余百分比"(*_remaining_percent)，不再返具体 count。
+  // 我们把 used 推导成"已用百分比" (100 - remaining)，total 设为 100，
+  // 这样下游的 used/total 比例和百分比语义保持不变，前端零改动。
   const sorted = [...remains].sort((a, b) => {
     const a4 = is4HourWindow(a) ? 0 : 1;
     const b4 = is4HourWindow(b) ? 0 : 1;
     if (a4 !== b4) return a4 - b4;
-    return (a.current_interval_usage_count / a.current_interval_total_count || 0) <
-           (b.current_interval_usage_count / b.current_interval_total_count || 0) ? 1 : -1;
+    return (a.current_interval_remaining_percent ?? 100) <
+           (b.current_interval_remaining_percent ?? 100) ? 1 : -1;
   });
-  return sorted.map(e => ({
-    name:      MODEL_NAME_MAP[e.model_name] || e.model_name,
-    used:      e.current_interval_usage_count,
-    total:     e.current_interval_total_count,
-    window:    is4HourWindow(e) ? '4小时' : '24小时',
-    remains_time_ms: e.remains_time,
-    weekly_used:     e.current_weekly_usage_count || 0,
-    weekly_total:     e.current_weekly_total_count || 0,
-  }));
+  return sorted.map(e => {
+    const remPct = clampPct(e.current_interval_remaining_percent);
+    const wRemPct = clampPct(e.current_weekly_remaining_percent);
+    // 官方 status: 1=限额中 3=无限制/正常。wstatus=3 表示该模型本周无配额上限。
+    const weeklyUnlimited = e.current_weekly_status === 3;
+    // v1.3.0: status=3 在 interval 上其实有两种情况——
+    //   (a) 真·无限额（语音/音乐/图像 等总是开放）
+    //   (b) 套餐未启用（video 额度项元数据存在但被屏蔽，调 API 会被拒"用量上限"）
+    // 仅靠元数据无法区分。但后端实际是 status=3 时让前端显示"套餐未启用"提示，
+    // 顶部聚合排除掉，避免假数据污染大圆环。
+    const intervalUnlimited = e.current_interval_status === 3;
+    return {
+      name:      MODEL_NAME_MAP[e.model_name] || e.model_name,
+      used:      100 - remPct, // 已用百分比
+      total:     100,           // 基数 100，前端 used/total 比例 = 已用%
+      window:    is4HourWindow(e) ? '4小时' : '24小时',
+      remains_time_ms: e.remains_time,
+      weekly_used:     100 - wRemPct,
+      weekly_total:    100,
+      weekly_unlimited: weeklyUnlimited,
+      interval_unlimited: intervalUnlimited,
+    };
+  });
+}
+
+function clampPct(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 100;
+  if (n < 0) return 0;
+  if (n > 100) return 100;
+  return n;
 }
 
 // ── Ordinary (non-streaming) API probe ────────────────
@@ -150,8 +157,10 @@ async function probeBurstApi(apiKey) {
     { model: 'MiniMax-M2.7', messages: testMessages, max_tokens: 30, stream: true }
   ).then(({ status, data }) => {
     const latency = Date.now() - t0;
-    const parsed = parseJson(data);
-    return { ok: status === 200 && parsed ? 1 : 0, total: 1, latency };
+    // v1.3.0: SSE 流式响应是多行 "data: {...}\n\n..." 格式，parseJson 整块会失败。
+    // 只要 status=200 且 body 以 "data:" 开头就视为成功。
+    const ok = status === 200 && data.trimStart().startsWith('data:') ? 1 : 0;
+    return { ok, total: 1, latency };
   }).catch(() => ({ ok: 0, total: 1, latency: Date.now() - t0 }));
   const results = await Promise.all([makeReq(), makeReq(), makeReq()]);
   return {
@@ -203,7 +212,6 @@ async function probeApiLatency(apiKey) {
         tokens,
         qps: 1,
         p50: latency,
-        p99: Math.round(latency * 1.3),
       };
     }
 
@@ -235,7 +243,6 @@ async function probeApiLatency(apiKey) {
       tokens: tokensReceived,
       qps: 1,
       p50: totalTime,
-      p99: Math.round(totalTime * 1.4),
       seq_min: totalTime,
       seq_max: totalTime,
       burst_ok: 0,
@@ -252,7 +259,6 @@ async function probeApiLatency(apiKey) {
       tokens: 0,
       qps: 0,
       p50: elapsed,
-      p99: Math.round(elapsed * 1.5),
       seq_min: elapsed,
       seq_max: elapsed,
       burst_ok: 0,
@@ -264,12 +270,6 @@ async function probeApiLatency(apiKey) {
 }
 
 // ── Rate counters (cumulative) ───────────────────────────
-const rateCounters = {
-  seq10_ok: 0, seq10_total: 0,
-  burst_ok: 0, burst_total: 0,
-  ordinary_ok: 0, ordinary_total: 0,
-  llm_ok: 0, llm_total: 0,
-};
 
 // ── Server ───────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
@@ -322,40 +322,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ── GET /api/quota ─────────────────────────────────────
-  if (req.method === 'GET' && urlPath === '/api/quota') {
-    const raw = runMmx('quota show --output json', apiKey);
-    if (!raw) {
-      res.writeHead(502, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'mmx command failed' }));
-      return;
-    }
-    const json = parseJson(raw);
-    if (!json) {
-      res.writeHead(502, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'parse failed' }));
-      return;
-    }
-    const data = buildModels(json.model_remains || []);
-    if (!data) {
-      res.writeHead(502, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'parse failed' }));
-      return;
-    }
-    // Attach last known rate data
-    const avgLat = rateCounters.seq10_total > 0 ? (rateCounters.seq10_ok / rateCounters.seq10_total).toFixed(2) : '0';
-    data.rate = {
-      seq10_ok: rateCounters.seq10_ok, seq10_total: rateCounters.seq10_total,
-      seq10_latency: parseFloat(avgLat),
-      burst_ok: rateCounters.burst_ok, burst_total: rateCounters.burst_total,
-      ordinary_ok: rateCounters.ordinary_ok, ordinary_total: rateCounters.ordinary_total,
-      llm_ok: rateCounters.llm_ok, llm_total: rateCounters.llm_total,
-    };
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(data));
-    return;
-  }
-
   // ── GET /api/probe ─────────────────────────────────────
   // Does a real streaming API call and returns actual performance data
   if (req.method === 'GET' && urlPath === '/api/probe') {
@@ -384,7 +350,6 @@ const server = http.createServer(async (req, res) => {
       // Performance data from real probe
       latency: probeResult.latency,    // P50
       p50: probeResult.p50,
-      p99: probeResult.p99,
       ttft: probeResult.ttft,
       speed: probeResult.speed,        // tokens/s
       qps: probeResult.qps,
@@ -404,7 +369,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`MiniMax Monitor API -> http://localhost:${PORT}`);
-  console.log('  GET /api/quota      — mmx quota');
   console.log('  GET /api/token_plan — MiniMax token_plan');
   console.log('  GET /api/probe     — real API latency probe');
   console.log('  GET /health        — health check');

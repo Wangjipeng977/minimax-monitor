@@ -9,8 +9,6 @@
 body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang SC',sans-serif;min-height:100vh}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px 12px;background:#bbbbbb;border-bottom:1px solid rgba(0,0,0,0.1);position:relative}
 .topbar::after{content:'';position:absolute;bottom:0;left:28px;right:28px;height:1px;background:linear-gradient(90deg,transparent,rgba(0,151,167,0.3),transparent)}
-.logo-icon{width:22px;height:22px;background:linear-gradient(135deg,var(--cyan),#0066ff);border-radius:5px;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:2px;padding:3px}
-.logo-icon span{background:rgba(255,255,255,0.8);border-radius:1px}
 .topbar-center{text-align:center;flex:1}
 .topbar-title{font-size:22px;font-weight:800;background:linear-gradient(90deg,#00e5ff,#0097a7,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
 .topbar-sub{font-size:12px;color:#888;margin-top:2px}
@@ -24,7 +22,6 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .status-item.hl .val{color:var(--cyan);font-weight:700}
 .apikey-bar{display:flex;align-items:center;gap:10px;margin:12px 28px;padding:10px 14px;background:rgba(48,48,56,0.82);border:1px solid rgba(255,255,255,0.12);border-radius:8px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .apikey-bar label{font-size:12px;color:rgba(255,255,255,0.6);white-space:nowrap}
-.key-dots{flex:1;display:flex;align-items:center;gap:4px;overflow:hidden;min-height:20px}
 .key-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.2);flex-shrink:0}
 .key-placeholder{font-size:12px;color:rgba(255,255,255,0.8);font-style:italic}
 #apiKeyInput::-webkit-input-placeholder{color:rgba(255,255,255,0.9)}
@@ -49,14 +46,51 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .stat-num.green{color:var(--green)}.stat-num.red{color:var(--red)}.stat-num.cyan{color:var(--cyan)}.stat-num.yellow{color:var(--yellow)}
 .stat-block.hl{background:rgba(0,151,167,0.15);border:1px solid rgba(0,151,167,0.3)}
 .stat-block.hl .stat-lbl{color:var(--cyan)}.stat-block.hl .stat-num{color:var(--cyan)}
-.week-status{text-align:center;margin-top:6px;font-size:10px}
-.week-status .lbl{color:rgba(255,255,255,0.9)}
-.week-status .val{color:var(--green);font-weight:700}
-.model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow:hidden;flex:1;padding-right:4px;align-content:start}
+.model-grid{display:grid;grid-template-columns:1fr;grid-auto-rows:1fr;gap:10px;overflow:hidden;flex:1;padding-right:4px;align-content:stretch;min-height:0}
+.model-grid > .model-card{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.model-grid > .model-card .model-card-body{flex:1;min-height:0;display:flex;flex-direction:column}
 .model-grid::-webkit-scrollbar{width:3px}.model-grid::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
 .section-header{display:flex;align-items:center;gap:7px;padding-bottom:9px;border-bottom:1px solid rgba(0,0,0,0.06);font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
 .model-card{background:rgba(48,48,56,0.75);border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;transition:border-color .3s;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .model-card:hover{border-color:rgba(0,151,167,0.3)}
+.model-card-wide{grid-column:1 / -1;border-color:rgba(255,82,82,0.3);background:rgba(40,28,28,0.7);display:flex;flex-direction:column;margin-top:6px}
+.model-card-wide .model-card-body{padding:10px 14px 12px}
+.model-card-wide .model-card-top{margin-bottom:8px}
+.model-card-row{display:flex;flex-direction:column;height:100%}
+.model-card-split{display:flex;gap:14px;flex:1;min-height:0}
+.model-card-split-left{flex:0 0 55%;display:flex;flex-direction:column;gap:6px;min-width:0}
+.model-card-split-right{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;padding-left:14px;border-left:1px solid rgba(255,255,255,0.08)}
+.big-num-row{display:flex;align-items:baseline;gap:8px}
+.big-num{font-size:34px;font-weight:700;color:#fff;line-height:1;font-family:'Roboto Mono',monospace}
+.big-num-suffix{font-size:13px;color:rgba(255,255,255,0.5);font-weight:500}
+.split-label{font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:0.5px;text-transform:uppercase}
+.split-bar{height:6px;background:rgba(0,0,0,0.25);border-radius:3px;overflow:hidden;margin-top:4px}
+.split-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.split-meta{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px}
+.model-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.model-tag-chip{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(0,151,167,0.15);color:#4dd0e1;border:1px solid rgba(0,151,167,0.25)}
+.model-tag-chip.muted{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);border-color:rgba(255,255,255,0.08)}
+.week-stat{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.6);padding:4px 0}
+.week-stat-dot{width:6px;height:6px;border-radius:50%;background:#00e676}
+.week-stat-dot.unlimited{background:#b388ff}
+.upgrade-panel{display:flex;align-items:stretch;gap:0;margin-top:8px;background:rgba(0,0,0,0.2);border-radius:6px;overflow:hidden}
+.upgrade-panel-left{flex:0 0 auto;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid rgba(255,255,255,0.08)}
+.upgrade-panel-left-title{font-size:10px;color:rgba(255,255,255,0.55);margin-bottom:4px;letter-spacing:0.5px}
+.upgrade-panel-left-link{font-size:11px;color:#ff8a80;text-decoration:none;padding:3px 0}
+.upgrade-panel-left-link:hover{color:#ff5252;text-decoration:underline}
+.upgrade-panel-table{flex:1;display:flex}
+.upgrade-tier{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(255,255,255,0.05)}
+.upgrade-tier:last-child{border-right:none}
+.upgrade-tier-name{font-size:11px;font-weight:600}
+.upgrade-tier-plus .upgrade-tier-name{color:#b0bec5}
+.upgrade-tier-max .upgrade-tier-name{color:#ff8a80}
+.upgrade-tier-ultra .upgrade-tier-name{color:#ce93d8}
+.upgrade-tier-max{background:rgba(255,82,82,0.06);position:relative}
+.upgrade-tier-max::after{content:'推荐';position:absolute;top:4px;right:4px;font-size:8px;background:#ff5252;color:#fff;padding:1px 5px;border-radius:8px;font-weight:600}
+.upgrade-tier-price{font-size:9px;color:rgba(255,255,255,0.55)}
+.upgrade-tier-video{font-size:10px;margin-top:2px}
+.upgrade-video-yes{color:#00e676}
+.upgrade-video-no{color:rgba(255,255,255,0.4)}
 .model-card-bar{height:3px}
 .model-card-body{padding:3px 4px 4px}
 .model-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
@@ -66,9 +100,6 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .model-reset{font-size:9px;color:rgba(255,255,255,0.8);margin-bottom:6px}
 .model-usage{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
 .model-used{font-family:"Roboto Mono",monospace;font-size:12px;font-weight:700}
-.model-pct{font-size:9px;color:#00e676}
-.model-bar{height:3px;background:rgba(0,0,0,0.2);border-radius:2px;overflow:hidden}
-.model-bar-fill{height:100%;border-radius:2px;transition:width .6s ease,background .3s}
 .right-panel{display:flex;flex-direction:column;gap:0;overflow-y:auto;height:100%}
 .right-panel::-webkit-scrollbar{width:3px}.right-panel::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
 .panel-header{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:8px}
@@ -82,11 +113,6 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .rate-val{font-family:"Roboto Mono",monospace;font-size:12px;font-weight:700}
 .rate-val.green{color:var(--green)}.rate-val.cyan{color:var(--cyan)}.rate-val.yellow{color:var(--yellow)}.rate-val.orange{color:var(--orange)}
 .rate-lat{font-size:9px;color:rgba(255,255,255,0.7);margin-left:3px}
-.qps-block{text-align:center;padding:10px 0}
-.qps-num{font-family:"Roboto Mono",monospace;font-size:21px;font-weight:700;color:var(--cyan);text-shadow:0 0 12px rgba(0,151,167,0.3)}
-.qps-unit{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px}
-.qps-bars{display:flex;gap:2px;align-items:flex-end;height:12px;margin-top:3px;justify-content:center}
-.qps-bar{width:6px;background:rgba(0,151,167,0.15);border-radius:2px;transition:height .4s,background .4s}
 .latency-item{display:flex;align-items:center;gap:7px;margin-bottom:6px}
 .latency-item:last-child{margin-bottom:0}
 .lat-lbl{font-size:10px;color:rgba(255,255,255,0.8);width:40px;flex-shrink:0}
@@ -168,8 +194,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
       <div style="height:3px"></div>
       <div class="panel-header"><div class="live-dot"></div> API 性能详情</div>
       <div class="latency-item"><div class="lat-lbl">TTFT</div><div class="lat-bar-wrap"><div class="lat-bar-fill" id="ttftBar" style="width:30%;background:var(--cyan)"></div></div><div class="lat-val" id="ttftVal">--ms</div></div>
-      <div class="latency-item"><div class="lat-lbl">P50</div><div class="lat-bar-wrap"><div class="lat-bar-fill" id="p50Bar" style="width:40%;background:var(--green)"></div></div><div class="lat-val" id="p50Val">--ms</div></div>
-      <div class="latency-item"><div class="lat-lbl">P99</div><div class="lat-bar-wrap"><div class="lat-bar-fill" id="p99Bar" style="width:55%;background:var(--yellow)"></div></div><div class="lat-val" id="p99Val">--ms</div></div>
+      <div class="latency-item"><div class="lat-lbl">延迟</div><div class="lat-bar-wrap"><div class="lat-bar-fill" id="p50Bar" style="width:40%;background:var(--green)"></div></div><div class="lat-val" id="p50Val">--ms</div></div>
       <div class="latency-item"><div class="lat-lbl">Tokens/s</div><div class="lat-bar-wrap"><div class="lat-bar-fill" id="tokBar" style="width:50%;background:var(--orange)"></div></div><div class="lat-val" id="tokVal">--</div></div>
     </div>
   </div>
@@ -180,14 +205,14 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 </div>
 <script>
 (function(){
-  var API_BASE='http://localhost:9876';
+  var API_BASE='http://localhost:9877';
   var REFRESH_INT=60,SPEED_INT=60;
   var CARD_COLORS=['#00e676','#ffd600','#ff5252','#00e5ff','#b388ff','#ff9800','#76ff03','#ff4081','#18ffff','#ff6e40','#eeff41'];
   var apiKey=localStorage.getItem('mmx_api_key')||'';
   var timers={refresh:REFRESH_INT,speed:SPEED_INT,reset:0};
   var tickId=null;
   var qpsHistory=[0,0,0,0,0,0,0,0];
-  function fmt(s){var m=Math.floor(s/60),sec=s%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
+  function fmt(s){if(s<=0)return'即将重置';var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>=24){var d=Math.floor(h/24);h=h%24;return d+'天'+h+'小时'+(m>0?m+'分':'');}if(h>0)return h+'小时'+m+'分';if(m>0)return m+'分'+sec+'秒';return sec+'秒';}
   function fmtDate(d){var y=d.getFullYear(),mo=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0'),h=String(d.getHours()).padStart(2,'0'),mi=String(d.getMinutes()).padStart(2,'0');return y+'/'+mo+'/'+da+' '+h+':'+mi;}
   function gaugeColor(p){if(p<60)return'#00e676';if(p<80)return'#b388ff';if(p<95)return'#ffd600';return'#ff5252';}
   function drawTicks(){var g=document.getElementById('gTicks'),cx=100,cy=105;for(var d=-120;d<=120;d+=20){var r=(d-90)*Math.PI/180;var line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',cx+68*Math.cos(r));line.setAttribute('y1',cy+68*Math.sin(r));line.setAttribute('x2',cx+76*Math.cos(r));line.setAttribute('y2',cy+76*Math.sin(r));line.setAttribute('stroke','rgba(255,255,255,0.15)');line.setAttribute('stroke-width','1.5');g.appendChild(line);}}
@@ -207,25 +232,24 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
         if(!d||!d.ok)return;
         var r=d;
         document.getElementById('seqOk').textContent=(r.seq_ok!=null?r.seq_ok:'--')+'/'+(r.seq10_total||'--');
-        document.getElementById('seqLat').innerHTML=Number(r.seq10_latency||0).toFixed(2)+'<span class="rate-lat">s</span>';
+        document.getElementById('seqLat').innerHTML=Math.round(Number(r.seq10_latency||0))+'<span class="rate-lat">ms</span>';
         document.getElementById('seqRange').textContent=(r.seq_min!=null?r.seq_min:'--')+' / '+(r.seq_max!=null?r.seq_max:'--');
         document.getElementById('burstOk').textContent=(r.burst_ok!=null?r.burst_ok:'--')+'/'+(r.burst_total||'--');
-        document.getElementById('burstLat').innerHTML=Number(r.burst_latency||0).toFixed(2)+'<span class="rate-lat">s</span>';
+        document.getElementById('burstLat').innerHTML=Math.round(Number(r.burst_latency||0))+'<span class="rate-lat">ms</span>';
         document.getElementById('llmOk').textContent=(r.llm_ok!=null?r.llm_ok:'--')+'/'+(r.llm_total||'--');
         document.getElementById('ordOk').textContent=(r.ordinary_ok!=null?r.ordinary_ok:'--')+'/'+(r.ordinary_total||'--');
         document.getElementById('ttftVal').textContent=(r.ttft||0)+'ms';
         document.getElementById('ttftBar').style.width=Math.min(100,(r.ttft||0)/5000*100)+'%';
         document.getElementById('p50Bar').style.width=Math.min(100,(r.latency||0)/5000*100)+'%';
         document.getElementById('p50Val').textContent=(r.latency||0)+'ms';
-        document.getElementById('p99Bar').style.width=Math.min(100,(r.p99||0)/5000*100)+'%';
-        document.getElementById('p99Val').textContent=(r.p99||0)+'ms';
         document.getElementById('tokBar').style.width=Math.min(100,(r.speed||0)/30*100)+'%';
         document.getElementById('tokVal').textContent=Number(r.speed||0).toFixed(1);
         document.getElementById('stripSpeed').textContent='OK';
       }).catch(function(){});
   }
-  function renderQuota(data){if(!data)return;document.getElementById('lastUpdate').textContent=new Date().toLocaleTimeString('zh-CN');var fourH=(data.models||[]).filter(function(m){return m.window==='4小时';});var used=data.totalUsed||fourH.reduce(function(s,m){return s+(m.used||0);},0);var total=data.totalLimit||fourH.reduce(function(s,m){return s+(m.total||0);},0);var pct=total>0?Math.round(used/total*100):0;var color=gaugeColor(pct),fill=document.getElementById('gFill');fill.setAttribute('stroke',color);fill.setAttribute('stroke-dasharray',(pct/100*515)+' 515');document.getElementById('gPct').textContent=pct+'%';document.getElementById('statUsed').textContent=used.toLocaleString();document.getElementById('statRemain').textContent=Math.max(0,total-used).toLocaleString();document.getElementById('statTotal').textContent=total.toLocaleString();var resetSec=data.resetSeconds||0;timers.reset=resetSec;document.getElementById('statResetTime').textContent=new Date(Date.now()+resetSec*1000).toLocaleTimeString('zh-CN');var weeklyUsed=0,weeklyTotal=0,anyNoWeekly=false;(data.models||[]).forEach(function(m){weeklyUsed+=m.weekly_used||0;var wt=m.weekly_total||0;weeklyTotal+=wt;if(wt===0)anyNoWeekly=true;});document.getElementById('statWeeklyUsed').textContent=weeklyUsed>0?weeklyUsed.toLocaleString():'--';document.getElementById('statWeeklyTotal').textContent=anyNoWeekly?'无周限内测用户':weeklyTotal.toLocaleString();if(data.rate){var r=data.rate;document.getElementById('seqOk').textContent=(r.seq_ok!=null?r.seq_ok:'--')+'/'+(r.seq10_total||'--');document.getElementById('seqLat').innerHTML=Number(r.seq10_latency||0).toFixed(2)+'<span class="rate-lat">s</span>';document.getElementById('burstOk').textContent=(r.burst_ok!=null?r.burst_ok:'--')+'/'+(r.burst_total||'--');document.getElementById('burstLat').innerHTML=Number(r.burst_latency||0).toFixed(2)+'<span class="rate-lat">s</span>';document.getElementById('llmOk').textContent=(r.llm_ok!=null?r.llm_ok:'--')+'/'+(r.llm_total||'--');document.getElementById('ordOk').textContent=(r.ordinary_ok!=null?r.ordinary_ok:'--')+'/'+(r.ordinary_total||'--');document.getElementById('ttftVal').textContent=(r.ttft||0)+'ms';document.getElementById('ttftBar').style.width=Math.min(100,(r.ttft||0)/5000*100)+'%';document.getElementById('p50Bar').style.width=Math.min(100,(r.latency||0)/5000*100)+'%';document.getElementById('p50Val').textContent=(r.latency||0)+'ms';document.getElementById('p99Bar').style.width=Math.min(100,(r.p99||0)/5000*100)+'%';document.getElementById('p99Val').textContent=(r.p99||0)+'ms';document.getElementById('tokBar').style.width=Math.min(100,(r.speed||0)/30*100)+'%';document.getElementById('tokVal').textContent=Number(r.speed||0).toFixed(1);}renderModels(data.models||[]);}
-  function renderModels(models){var grid=document.getElementById('modelGrid');if(!models.length){grid.innerHTML='<div style="color:rgba(255,255,255,0.6);font-size:12px;text-align:center;padding:30px">暂无数据</div>';return;}var html='';for(var i=0;i<models.length;i++){var m=models[i],used=m.used||0,total=m.total||0;var pct=total>0?Math.round(used/total*100):0;var barColor=pct>=95?'#ff5252':pct>=75?'#ffd600':pct>=40?'#b388ff':'#00e676';var resetSec=m.remains_time_ms?Math.ceil(m.remains_time_ms/1000):0;var resetStr=resetSec>0?fmt(resetSec):'--:--';var now=new Date();var endTime=new Date(now.getTime()+resetSec*1000);var windowDurSec=m.window==='4小时'?5*3600:m.window==='24小时'?24*3600:4*3600;var startTime=new Date(endTime.getTime()-windowDurSec*1000);var barAccent=CARD_COLORS[i%CARD_COLORS.length];html+='<div class="model-card"><div class="model-card-bar" style="background:'+barAccent+'"></div><div class="model-card-body">';html+='<div class="model-card-top"><span class="model-name">'+m.name+'</span><span class="model-tag">'+(m.window==='4小时'?'5小时':m.window)+'</span></div>';html+='<div class="model-time-range">'+fmtDate(startTime)+' - '+fmtDate(endTime)+'</div>';html+='<div class="model-reset">重置倒计时 '+resetStr+'</div>';if(m.weekly_total>0){html+='<div style="font-size:9px;color:rgba(255,255,255,0.7);margin-bottom:4px">本周: '+(m.weekly_used||0).toLocaleString()+' / '+(m.weekly_total||0).toLocaleString()+'</div>';}html+='<div class="model-usage"><span class="model-used" style="color:'+barColor+'">'+used.toLocaleString()+' / '+total.toLocaleString()+'</span><span class="model-pct">'+pct+'%</span></div>';html+='<div class="model-bar"><div class="model-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div></div></div>';}grid.innerHTML=html;}
+  function renderQuota(data){if(!data)return;document.getElementById('lastUpdate').textContent=new Date().toLocaleTimeString('zh-CN');var fourH=(data.models||[]).filter(function(m){return m.window==='4小时'&&!m.interval_unlimited;});var used=data.totalUsed||fourH.reduce(function(s,m){return s+(m.used||0);},0);var total=data.totalLimit||fourH.reduce(function(s,m){return s+(m.total||0);},0);var pct=total>0?Math.round(used/total*100):0;var color=gaugeColor(pct),fill=document.getElementById('gFill');fill.setAttribute('stroke',color);fill.setAttribute('stroke-dasharray',pct+' 100');document.getElementById('gPct').textContent=pct+'%';document.getElementById('statUsed').textContent=used+'%';document.getElementById('statRemain').textContent=Math.max(0,total-used)+'%';document.getElementById('statTotal').textContent=total+'%';var resetSec=data.resetSeconds||0;timers.reset=resetSec;document.getElementById('statResetTime').textContent=new Date(Date.now()+resetSec*1000).toLocaleTimeString('zh-CN');var weeklyModels=(data.models||[]).filter(function(m){return !m.weekly_unlimited;});var allUnlimited=weeklyModels.length===0&&(data.models||[]).length>0;var weeklyUsed=0;if(weeklyModels.length){weeklyUsed=Math.round(weeklyModels.reduce(function(s,m){return s+(m.weekly_used||0);},0)/weeklyModels.length);}document.getElementById('statWeeklyUsed').textContent=weeklyModels.length?weeklyUsed+'%':(allUnlimited?'--':'--');document.getElementById('statWeeklyTotal').textContent=allUnlimited?'无周限':'100%';renderModels(data.models||[]);}
+  var GENERAL_POOL_MODELS=[{n:'M3 对话',t:'llm'},{n:'M2.7 对话',t:'llm'},{n:'语音合成',t:'tts'},{n:'音乐生成',t:'music'},{n:'图像生成',t:'img'},{n:'歌词生成',t:'lyrics'},{n:'代码 VLM',t:'llm'},{n:'代码搜索',t:'llm'},{n:'Embeddings',t:'embed'}];
+  function renderModels(models){var grid=document.getElementById('modelGrid');if(!models.length){grid.innerHTML='<div style="color:rgba(255,255,255,0.6);font-size:12px;text-align:center;padding:30px">暂无数据</div>';return;}var html='';for(var i=0;i<models.length;i++){var m=models[i],used=m.used||0,total=m.total||0;var pct=total>0?Math.round(used/total*100):0;var barColor=pct>=95?'#ff5252':pct>=75?'#ffd600':pct>=40?'#b388ff':'#00e676';var resetSec=m.remains_time_ms?Math.ceil(m.remains_time_ms/1000):0;var resetStr=resetSec>0?fmt(resetSec):'--:--';var now=new Date();var endTime=new Date(now.getTime()+resetSec*1000);var windowDurSec=m.window==='4小时'?5*3600:m.window==='24小时'?24*3600:4*3600;var startTime=new Date(endTime.getTime()-windowDurSec*1000);var barAccent=CARD_COLORS[i%CARD_COLORS.length];var intervalDisabled=m.interval_unlimited===true;if(intervalDisabled){barColor='rgba(255,255,255,0.25)';barAccent='#ff5252';}var cardClass=intervalDisabled?'model-card model-card-wide':'model-card model-card-wide';html+='<div class="'+cardClass+'"><div class="model-card-bar" style="background:'+barAccent+'"></div><div class="model-card-body model-card-row">';html+='<div class="model-card-top"><span class="model-name">'+(intervalDisabled?m.name:'通用额度池 (对话/语音/音乐/图像)')+'</span><span class="model-tag">'+(m.window==='4小时'?'5小时':m.window)+'</span></div>';if(intervalDisabled){html+='<div class="model-time-range">'+fmtDate(startTime)+' - '+fmtDate(endTime)+'</div>';html+='<div class="model-reset" style="color:#ff5252">套餐未启用 · 不可调用</div>';html+='<div class="model-usage"><span class="model-used" style="color:rgba(255,255,255,0.5)">状态: 套餐未启用 · 元数据 status=3</span></div>';html+='<div class="upgrade-panel" style="flex:1;margin-top:8px">';html+='<div class="upgrade-panel-left"><div class="upgrade-panel-left-title">升级可获得</div><a class="upgrade-panel-left-link" href="https://platform.minimaxi.com/subscribe/token-plan" target="_blank" rel="noopener">查看官方套餐 →</a></div>';html+='<div class="upgrade-panel-table">';html+='<div class="upgrade-tier upgrade-tier-plus"><div class="upgrade-tier-name">Plus</div><div class="upgrade-tier-price">¥49 / 月</div><div class="upgrade-tier-video upgrade-video-no">❌ 不支持视频</div></div>';html+='<div class="upgrade-tier upgrade-tier-max"><div class="upgrade-tier-name">Max</div><div class="upgrade-tier-price">¥119 / 月</div><div class="upgrade-tier-video upgrade-video-yes">✅ 3 条 / 日</div></div>';html+='<div class="upgrade-tier upgrade-tier-ultra"><div class="upgrade-tier-name">Ultra</div><div class="upgrade-tier-price">¥469 / 月</div><div class="upgrade-tier-video upgrade-video-yes">✅ 5 条 / 日</div></div>';html+='</div></div>';}else{html+='<div class="model-card-split" style="margin-top:8px">';html+='<div class="model-card-split-left">';html+='<div class="split-label">剩余配额</div>';html+='<div class="big-num-row"><span class="big-num" style="color:'+barColor+'">'+(100-pct)+'</span><span class="big-num-suffix">% 可用</span></div>';html+='<div class="split-bar"><div class="split-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>';html+='<div class="split-meta"><span>已用 '+pct+'%</span><span>重置 '+resetStr+' 后</span></div>';html+='<div class="week-stat"><span class="week-stat-dot'+(m.weekly_unlimited?' unlimited':'')+'"></span>本周: '+(m.weekly_unlimited?'无周限 · 全量可用':'已用 '+(m.weekly_used||0)+'% · 剩 '+(100-(m.weekly_used||0))+'%')+'</div>';html+='<div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:auto;padding-top:8px">窗口: '+fmtDate(startTime)+' → '+fmtDate(endTime)+'</div>';html+='</div>';html+='<div class="model-card-split-right">';html+='<div class="split-label">本池可用模型</div>';html+='<div class="model-tags">';for(var k=0;k<GENERAL_POOL_MODELS.length;k++){html+='<span class="model-tag-chip">'+GENERAL_POOL_MODELS[k].n+'</span>';}html+='<span class="model-tag-chip muted">+ 视频 (需升级)</span>';html+='</div>';html+='<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:8px">总 token: 详见套餐页 →</div>';html+='</div>';html+='</div>';}html+='</div></div>';}grid.innerHTML=html;}
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
       fetchQuota();

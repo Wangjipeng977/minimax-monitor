@@ -2,7 +2,7 @@
 
 实时仪表盘，监控 MiniMax API 套餐使用情况，支持配额、速率探针、本周用量追踪。
 
-> **当前版本：v1.1.0** | [更新日志](#更新日志)
+> **当前版本：v1.2.0** | [更新日志](#更新日志)
 
 ![Dashboard](demo.png)
 
@@ -11,6 +11,10 @@
 ---
 
 ## 更新日志
+
+### v1.2.0（2026-06-23）
+- 🆙 **适配官方 Token Plan 新格式**：官方 `/v1/token_plan/remains` 不再返回 `*_usage_count` / `*_total_count`，改为只返 `*_remaining_percent`（剩余百分比）。Server 推导已用%，前端契约保持不变。
+- 🆙 **飞书卡片文案同步**：5小时配额 / 模型明细 / 本周配额全部展示"已用 X% / 剩余 Y%"。
 
 ### v1.1.0（2026-05-02）
 - 🆕 **标签页自动刷新**：切换回浏览器标签时，自动触发一次配额和速率数据刷新，不再依赖定时轮询
@@ -90,7 +94,7 @@ FEISHU_CHAT_ID=your-chat-id               # 飞书群 ID
 | 文件 | 说明 |
 |------|------|
 | `mmx-monitor.html` | 监控页面（纯前端，单文件 HTML） |
-| `mmx-monitor-server.js` | 本地代理服务（Node.js，端口 9876） |
+| `mmx-monitor-server.js` | 本地代理服务（Node.js，端口 9877） |
 | `mmx_quota_feishu.py` | 飞书推送脚本（可选） |
 | `demo.png` | 监控页面截图 |
 | `README.md` | 本文件 |
@@ -130,7 +134,7 @@ python3 mmx_quota_feishu.py <api_key>
 **Q: 点查询后显示"连接失败"？**
 A: 请确认后端服务已启动（`node mmx-monitor-server.js`）。服务未运行时前端会提示"请先启动后端服务"。
 
-**Q: 端口 9876 被占用？**
+**Q: 端口 9877 被占用？**
 A: 停止占用该端口的进程，或修改 `mmx-monitor-server.js` 中的 `PORT` 常量。
 
 **Q: 飞书推送失败？**

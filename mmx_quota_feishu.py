@@ -76,9 +76,12 @@ def format_quota(resp):
     total_limit = data.get("totalLimit", 0)
     reset_sec = data.get("resetSeconds", 0)
 
-    pct = round(total_used / total_limit * 100) if total_limit else 0
+    # v1.2.0: 官方只返"剩余百分比"，server 把 used 推导成已用%，total 恒 100。
+    # 文案适配：直接展示"已用 X%" / "剩余 Y%"，不再打印"0/100"这种基数。
+    pct_used = round(total_used / total_limit * 100) if total_limit else 0
+    pct_remain = 100 - pct_used
     blocks.append({"tag": "markdown", "content": f"**📊 MiniMax 套餐配额**  更新: {time.strftime('%H:%M:%S')}"})
-    blocks.append({"tag": "markdown", "content": f"**5小时配额** `{pct}%`  已用 `{total_used:,}` / `{total_limit:,}`  剩余 `{max(0, total_limit - total_used):,}`"})
+    blocks.append({"tag": "markdown", "content": f"**5小时配额** 已用 `{pct_used}%`  剩余 `{pct_remain}%`"})
     if reset_sec:
         h, m = reset_sec // 3600, (reset_sec % 3600) // 60
         blocks.append({"tag": "markdown", "content": f"⏱️ 重置倒计时: **{h}小时{m}分钟**"})
@@ -88,22 +91,27 @@ def format_quota(resp):
 
     for m in models:
         name = m.get("name", "-")
-        used = m.get("used", 0)
-        total = m.get("total", 0)
+        used = m.get("used", 0)         # 已用百分比
         window = m.get("window", "-")
-        mpct = round(used / total * 100) if total else 0
-        color = "🔴" if mpct >= 95 else "🟡" if mpct >= 75 else "🟢"
+        remain = 100 - used
+        color = "🔴" if used >= 95 else "🟡" if used >= 75 else "🟢"
         display_window = "5小时" if window == "4小时" else window
-        blocks.append({"tag": "markdown", "content": f"{color} **{name}** ({display_window})\n　已用 {used:,} / {total:,} = `{mpct}%`"})
+        blocks.append({"tag": "markdown", "content": f"{color} **{name}** ({display_window})\n　已用 `{used}%`  剩余 `{remain}%`"})
 
-    has_weekly = any(m.get("weekly_total", 0) > 0 for m in models)
+    has_weekly = any(not m.get("weekly_unlimited", False) for m in models)
     if has_weekly:
         blocks.append({"tag": "hr"})
         blocks.append({"tag": "markdown", "content": "**本周配额**"})
         for m in models:
-            wt = m.get("weekly_total", 0)
-            if wt > 0:
-                blocks.append({"tag": "markdown", "content": f"　{m['name']}: {m.get('weekly_used', 0):,} / {wt:,}"})
+            if m.get("weekly_unlimited", False):
+                blocks.append({"tag": "markdown", "content": f"　{m['name']}: 无周限"})
+            else:
+                w_used = m.get("weekly_used", 0)
+                w_remain = 100 - w_used
+                blocks.append({"tag": "markdown", "content": f"　{m['name']}: 已用 `{w_used}%`  剩余 `{w_remain}%`"})
+    else:
+        blocks.append({"tag": "hr"})
+        blocks.append({"tag": "markdown", "content": "**本周配额**: 无周限"})
 
     return blocks
 
