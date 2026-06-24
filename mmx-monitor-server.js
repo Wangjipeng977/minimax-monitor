@@ -210,8 +210,6 @@ async function probeApiLatency(apiKey) {
         ttft: latency,
         speed: tokens > 0 ? Math.round(tokens / (latency / 1000)) : 0,
         tokens,
-        qps: 1,
-        p50: latency,
       };
     }
 
@@ -241,8 +239,6 @@ async function probeApiLatency(apiKey) {
       latency: totalTime,
       speed,
       tokens: tokensReceived,
-      qps: 1,
-      p50: totalTime,
       seq_min: totalTime,
       seq_max: totalTime,
       burst_ok: 0,
@@ -257,8 +253,6 @@ async function probeApiLatency(apiKey) {
       latency: elapsed,
       speed: 0,
       tokens: 0,
-      qps: 0,
-      p50: elapsed,
       seq_min: elapsed,
       seq_max: elapsed,
       burst_ok: 0,
@@ -349,10 +343,8 @@ const server = http.createServer(async (req, res) => {
       ordinary_total: ordinaryResult.total,
       // Performance data from real probe
       latency: probeResult.latency,    // P50
-      p50: probeResult.p50,
       ttft: probeResult.ttft,
       speed: probeResult.speed,        // tokens/s
-      qps: probeResult.qps,
     }));
     return;
   }
