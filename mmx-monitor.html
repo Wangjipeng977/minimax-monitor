@@ -7,10 +7,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#bbbbbb;--card-bg:#ffffff;--card-border:rgba(0,0,0,0.08);--cyan:#0097a7;--green:#2e7d32;--yellow:#f57f17;--red:#c62828;--orange:#e65100;--text:#1a1a1a;--text-dim:#888888;--text-dark:#aaaaaa;--radius:10px}
 body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang SC',sans-serif;min-height:100vh}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px 12px;background:#bbbbbb;border-bottom:1px solid rgba(0,0,0,0.1);position:relative}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 28px 9px;background:#bbbbbb;border-bottom:1px solid rgba(0,0,0,0.1);position:relative}
 .topbar::after{content:'';position:absolute;bottom:0;left:28px;right:28px;height:1px;background:linear-gradient(90deg,transparent,rgba(0,151,167,0.3),transparent)}
 .topbar-center{text-align:center;flex:1}
-.topbar-title{font-size:22px;font-weight:800;background:linear-gradient(90deg,#00e5ff,#0097a7,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
+.topbar-title{font-size:20px;font-weight:800;background:linear-gradient(90deg,#00e5ff,#0097a7,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
 .topbar-sub{font-size:12px;color:#888;margin-top:2px}
 .topbar-updated{font-size:12px;color:var(--green);margin-top:3px;font-weight:600}
 .status-strip{display:flex;align-items:center;justify-content:center;padding:9px 28px;background:#bbbbbb;border-bottom:1px solid rgba(0,0,0,0.06);font-size:12px}
@@ -20,7 +20,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .status-item .val{font-family:"Roboto Mono",monospace;font-weight:600;color:var(--text)}
 .status-item .val.cyan{color:var(--cyan)}
 .status-item.hl .val{color:var(--cyan);font-weight:700}
-.apikey-bar{display:flex;align-items:center;gap:10px;margin:12px 28px;padding:10px 14px;background:rgba(48,48,56,0.82);border:1px solid rgba(255,255,255,0.12);border-radius:8px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.apikey-bar{display:flex;align-items:center;gap:10px;margin:8px 28px;padding:7px 14px;background:rgba(48,48,56,0.82);border:1px solid rgba(255,255,255,0.12);border-radius:8px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .apikey-bar label{font-size:12px;color:rgba(255,255,255,0.6);white-space:nowrap}
 .key-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.2);flex-shrink:0}
 .key-placeholder{font-size:12px;color:rgba(255,255,255,0.8);font-style:italic}
@@ -31,22 +31,33 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 /* apiKeyInput uses inline style */
 .btn-save{background:var(--cyan);color:#fff;border:none;border-radius:6px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
 .btn-save:hover{background:#0097a7;box-shadow:0 0 12px rgba(0,151,167,0.3)}
-.left-panel{display:flex;flex-direction:column;height:100%}
-.glass-card{background:rgba(48,48,56,0.82);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 30px rgba(0,0,0,0.15)}.left-gauge-card{flex:1;display:flex;flex-direction:column}
-#rateCard{height:100%}
-.gauge-svg{width:100%;height:216px;overflow:visible;display:block}
+:root{--top:0px}
+.main-grid{display:flex;gap:6px;padding:0 28px 12px;align-items:stretch;height:var(--main-h,560px);max-height:calc(100vh - 150px);overflow:hidden}
+.left-panel,.middle-panel,.right-panel{flex:0 0 auto;display:flex;flex-direction:column;height:560px;min-height:0;overflow:hidden}
+.left-panel{flex:0 0 200px}
+.middle-panel{flex:1 1 0;min-width:0}
+.right-panel{flex:0 0 240px}
+.glass-card{background:rgba(48,48,56,0.82);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 30px rgba(0,0,0,0.15);display:flex;flex-direction:column;height:100%}
+.left-gauge-card{justify-content:flex-start;gap:8px;padding-bottom:18px}
+.left-gauge-card .gauge-svg{flex-shrink:0}
+.left-gauge-card .stat-block{flex:1;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:rgba(0,0,0,0.12);border-radius:6px;min-height:0}
+#rateCard{justify-content:space-evenly;gap:8px}
+#rateCard .panel-header{flex-shrink:0}
+#rateCard .rate-group{flex-shrink:0}
+.gauge-svg{width:100%;height:170px;overflow:visible;display:block}
 .gauge-track{fill:none;stroke:rgba(255,255,255,0.12);stroke-width:20;stroke-linecap:round}
 .gauge-fill{fill:none;stroke-width:20;stroke-linecap:round;filter:drop-shadow(0 0 6px currentColor)}
-.gauge-pct-num{font-family:"Roboto Mono",monospace;font-size:32px;font-weight:700;fill:var(--yellow);filter:drop-shadow(0 0 8px rgba(245,127,23,0.4));text-anchor:middle}
-.gauge-pct-label{font-size:10px;fill:rgba(255,255,255,0.7);text-anchor:middle}
-.stat-block{display:flex;justify-content:space-between;align-items:center;padding:8px 9px;background:rgba(0,0,0,0.12);border-radius:6px;margin-bottom:7px}
+.gauge-pct-num{font-family:"Roboto Mono",monospace;font-size:36px;font-weight:700;fill:var(--yellow);filter:drop-shadow(0 0 8px rgba(245,127,23,0.4));text-anchor:middle}
+.gauge-pct-label{font-size:12px;fill:rgba(255,255,255,0.7);text-anchor:middle}
+.stat-block{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:rgba(0,0,0,0.12);border-radius:6px}
 .stat-block:last-child{margin-bottom:0}
-.stat-lbl{font-size:11px;color:rgba(255,255,255,0.8)}
+.stat-lbl{font-size:12px;color:rgba(255,255,255,0.8)}
 .stat-num{font-family:"Roboto Mono",monospace;font-size:15px;font-weight:700}
 .stat-num.green{color:var(--green)}.stat-num.red{color:var(--red)}.stat-num.cyan{color:var(--cyan)}.stat-num.yellow{color:var(--yellow)}
 .stat-block.hl{background:rgba(0,151,167,0.15);border:1px solid rgba(0,151,167,0.3)}
 .stat-block.hl .stat-lbl{color:var(--cyan)}.stat-block.hl .stat-num{color:var(--cyan)}
-.model-grid{display:grid;grid-template-columns:1fr;grid-auto-rows:1fr;gap:10px;overflow:hidden;flex:1;padding-right:4px;align-content:stretch;min-height:0}
+.middle-card{display:flex;flex-direction:column;height:100%;min-height:0}
+.model-grid{display:grid;grid-template-columns:1fr;grid-auto-rows:minmax(0,1fr);gap:10px;overflow:hidden;flex:1;padding-right:4px;align-content:stretch;min-height:0}
 .model-grid > .model-card{min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .model-grid > .model-card .model-card-body{flex:1;min-height:0;display:flex;flex-direction:column}
 .model-grid::-webkit-scrollbar{width:3px}.model-grid::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
@@ -85,8 +96,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .upgrade-tier-plus .upgrade-tier-name{color:#b0bec5}
 .upgrade-tier-max .upgrade-tier-name{color:#ff8a80}
 .upgrade-tier-ultra .upgrade-tier-name{color:#ce93d8}
-.upgrade-tier-max{background:rgba(255,82,82,0.06);position:relative}
-.upgrade-tier-max::after{content:'推荐';position:absolute;top:4px;right:4px;font-size:8px;background:#ff5252;color:#fff;padding:1px 5px;border-radius:8px;font-weight:600}
+.upgrade-tier-max{position:relative}
 .upgrade-tier-price{font-size:9px;color:rgba(255,255,255,0.55)}
 .upgrade-tier-video{font-size:10px;margin-top:2px}
 .upgrade-video-yes{color:#00e676}
@@ -100,27 +110,29 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .model-reset{font-size:9px;color:rgba(255,255,255,0.8);margin-bottom:6px}
 .model-usage{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
 .model-used{font-family:"Roboto Mono",monospace;font-size:12px;font-weight:700}
-.right-panel{display:flex;flex-direction:column;gap:0;overflow-y:auto;height:100%}
+#rateCard{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:6px;padding-bottom:14px}
+#rateCard .panel-header{flex-shrink:0}
+#rateCard .rate-group{flex-shrink:0}
 .right-panel::-webkit-scrollbar{width:3px}.right-panel::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
-.panel-header{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:8px}
+.panel-header{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-left:4px}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;flex-shrink:0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-.rate-group{margin-bottom:14px}.rate-group:last-child{margin-bottom:0}
-.rate-group-title{font-size:10px;color:rgba(255,255,255,0.9);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.rate-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.06);border-radius:4px;margin-bottom:8px}
+.rate-group{margin-bottom:10px}.rate-group:last-child{margin-bottom:0}
+.rate-group-title{font-size:11px;color:rgba(255,255,255,0.9);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.rate-row{display:flex;justify-content:space-between;align-items:center;padding:6px 11px;background:rgba(255,255,255,0.06);border-radius:4px;margin-bottom:5px}
 .rate-row:last-child{margin-bottom:0}
-.rate-lbl{font-size:11px;color:rgba(255,255,255,0.85)}
-.rate-val{font-family:"Roboto Mono",monospace;font-size:12px;font-weight:700}
+.rate-lbl{font-size:12px;color:rgba(255,255,255,0.85)}
+.rate-val{font-family:"Roboto Mono",monospace;font-size:14px;font-weight:700}
 .rate-val.green{color:var(--green)}.rate-val.cyan{color:var(--cyan)}.rate-val.yellow{color:var(--yellow)}.rate-val.orange{color:var(--orange)}
 .rate-lat{font-size:9px;color:rgba(255,255,255,0.7);margin-left:3px}
-.latency-item{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.latency-item{display:flex;align-items:center;gap:7px;margin-bottom:5px}
 .latency-item:last-child{margin-bottom:0}
-.lat-lbl{font-size:10px;color:rgba(255,255,255,0.8);width:40px;flex-shrink:0}
+.lat-lbl{font-size:12px;color:rgba(255,255,255,0.8);width:44px;flex-shrink:0}
 .lat-bar-wrap{flex:1;height:4px;background:rgba(0,0,0,0.15);border-radius:2px;overflow:hidden}
 .lat-bar-fill{height:100%;border-radius:2px}
-.lat-val{font-family:"Roboto Mono",monospace;font-size:10px;color:rgba(255,255,255,0.8);width:42px;text-align:right;flex-shrink:0}
+.lat-val{font-family:"Roboto Mono",monospace;font-size:13px;color:rgba(255,255,255,0.8);width:46px;text-align:right;flex-shrink:0}
 
-.main-grid{display:grid;grid-template-columns:210px 1fr 248px;gap:6px;padding:0 28px 20px;align-items:stretch}
+.main-grid{display:grid;grid-template-columns:200px 1fr 240px;gap:6px;padding:0 28px 12px;align-items:start}
 
 </style>
 </head>
@@ -141,7 +153,8 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 </div>
 <div class="apikey-bar">
   <label>API Key</label>
-  <input type="password" id="apiKeyInput" placeholder="留空则自动读取本地密钥" style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e0e0e0;font-family:"Roboto Mono",monospace;font-size:18px;min-width:0;padding:10px 14px;outline:none;transition:border-color .2s;" />
+  <input type="password" id="apiKeyInput" placeholder="留空则自动读取本地 ~/.mmx/config.json" style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e0e0e0;font-family:"Roboto Mono",monospace;font-size:18px;min-width:0;padding:10px 14px;outline:none;transition:border-color .2s;" />
+  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap;cursor:pointer"><input type="checkbox" id="rememberKey" />记住 24 小时</label>
   <button class="btn-save" id="btnSave">查询</button>
 </div>
 <div id="errorBanner" style="display:none;margin:8px 28px 0;padding:10px 16px;background:rgba(198,40,40,0.9);border:1px solid rgba(255,80,80,0.4);border-radius:8px;color:#fff;font-size:13px;text-align:center;backdrop-filter:blur(10px);">
@@ -149,7 +162,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 </div>
 <div class="main-grid">
   <div class="left-panel">
-    <div class="glass-card left-gauge-card" style="flex:1;margin:8px 0;display:flex;flex-direction:column;overflow:hidden">
+    <div class="glass-card left-gauge-card" style="box-sizing:border-box">
       <svg class="gauge-svg" viewBox="-5 -5 200 145">
         <path id="gTrack" class="gauge-track" d="M 22 105 A 82 82 0 1 1 178 105" pathLength="100"/>
         <path id="gFill" class="gauge-fill" d="M 22 105 A 82 82 0 1 1 178 105" pathLength="100" stroke="#00e676" stroke-dasharray="0 100"/>
@@ -165,13 +178,13 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
     </div>
   </div>
   <div class="middle-panel">
-    <div class="glass-card" style="flex:1;margin:8px 0;display:flex;flex-direction:column;overflow:hidden">
+    <div class="glass-card middle-card" style="box-sizing:border-box">
       <div class="section-header">M 模型配额详情</div>
       <div class="model-grid" id="modelGrid"></div>
     </div>
   </div>
   <div class="right-panel">
-    <div class="glass-card" id="rateCard" style="flex:1;margin:8px 0;display:flex;flex-direction:column;overflow:hidden">
+    <div class="glass-card" id="rateCard" style="box-sizing:border-box">
       <div class="panel-header"><div class="live-dot"></div> 速率监控</div>
       <div class="rate-group"><div class="rate-group-title">SEQ-10 顺序测试</div>
         <div class="rate-row"><span class="rate-lbl">成功/总计</span><span class="rate-val green" id="seqOk">--/--</span></div>
@@ -200,7 +213,9 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
   var API_BASE='http://localhost:9877';
   var REFRESH_INT=60,SPEED_INT=60;
   var CARD_COLORS=['#00e676','#ffd600','#ff5252','#00e5ff','#b388ff','#ff9800','#76ff03','#ff4081','#18ffff','#ff6e40','#eeff41'];
-  var apiKey=localStorage.getItem('mmx_api_key')||'';
+  // v1.4.0: F13 - 默认不自动加载 localStorage 里的 key。每次启动需要重新输入，
+  // 或勾选 "记住 24 小时" 才临时写入 localStorage。期限到自动清除。
+  var apiKey='';
   var timers={refresh:REFRESH_INT,speed:SPEED_INT,reset:0};
   var tickId=null;
   function fmt(s){if(s<=0)return'即将重置';var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>=24){var d=Math.floor(h/24);h=h%24;return d+'天'+h+'小时'+(m>0?m+'分':'');}if(h>0)return h+'小时'+m+'分';if(m>0)return m+'分'+sec+'秒';return sec+'秒';}
@@ -244,8 +259,43 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
     }
   });
   document.addEventListener('DOMContentLoaded', function(){
-    
-    document.getElementById('btnSave').onclick=function(){var raw=document.getElementById('apiKeyInput').value.trim();if(raw){apiKey=raw;localStorage.setItem('mmx_api_key',apiKey);}startMon();};
+    // v1.5.0: 响应式主面板高度。min(560, vh-150) 让小屏笔记本不滚动。
+    function fitMainH(){
+      var vh=window.innerHeight;
+      var cap=Math.max(360, vh-150);
+      var want=Math.min(560, cap);
+      document.documentElement.style.setProperty('--main-h', want+'px');
+    }
+    fitMainH();
+    window.addEventListener('resize', fitMainH);
+    document.getElementById('btnSave').onclick=function(){
+      var raw=document.getElementById('apiKeyInput').value.trim();
+      var remember=document.getElementById('rememberKey').checked;
+      // 清除旧值
+      localStorage.removeItem('mmx_api_key');
+      localStorage.removeItem('mmx_api_key_expires');
+      if(raw && remember){
+        apiKey=raw;
+        var expires=Date.now()+24*3600*1000;
+        localStorage.setItem('mmx_api_key',apiKey);
+        localStorage.setItem('mmx_api_key_expires',String(expires));
+      }else if(raw){
+        apiKey=raw;
+      }
+      startMon();
+    };
+    // 启动时如果勾选过记住且未过期才加载
+    var stored=localStorage.getItem('mmx_api_key');
+    var exp=Number(localStorage.getItem('mmx_api_key_expires')||0);
+    if(stored && exp>Date.now()){
+      apiKey=stored;
+      document.getElementById('apiKeyInput').value=stored;
+      document.getElementById('rememberKey').checked=true;
+    }else if(stored){
+      // 过期清理
+      localStorage.removeItem('mmx_api_key');
+      localStorage.removeItem('mmx_api_key_expires');
+    }
     startMon();
   });
 })();

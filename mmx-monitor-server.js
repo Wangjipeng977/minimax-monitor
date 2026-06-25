@@ -7,7 +7,39 @@ const HTTPS = require('https');
 const PORT = 9877;  // v1.3.0: 错开 9876 (minimax-embedding-adapter)
 const MMX_CONFIG = path.join(process.env.HOME, '.mmx', 'config.json');
 
+// ── v1.4.0: CLI flags ───────────────────────────────────
+const FLAGS = {
+  // 默认禁用 header 透传 API key，避免本地服务被恶意网页当作 proxy 消费你的配额
+  // 需要使用 header key 时显式开启：node mmx-monitor-server.js --allow-header-key
+  allowHeaderKey: process.argv.includes('--allow-header-key'),
+  // 默认开启 probe（实时速率探测）。可 --no-probe 关闭，关掉后 /api/probe 返回 403
+  probeEnabled: !process.argv.includes('--no-probe'),
+};
+
+// ── v1.4.0: CORS origin allowlist ───────────────────────
+// 只允许本地源（浏览器 / 文件协议）调本机 server，禁止跨域乱用。
+// 历史 v1.3.x 使用 Access-Control-Allow-Origin: *，被 ClawHub 标记为高危（F5，97%）。
+const ALLOWED_ORIGINS = [
+  'http://127.0.0.1:9877',
+  'http://localhost:9877',
+  'http://127.0.0.1',
+  'http://localhost',
+  'file://',
+  'null',  // file:// 协议在某些浏览器下 Origin 头为 "null"
+];
+
+function corsOriginFor(req) {
+  const origin = req.headers['origin'] || '';
+  // 同源请求（curl / 本机直连）通常不带 Origin header，直接返回 false 表示无需 CORS 头
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  // 不在白名单：返回 null（不允许跨源）
+  return null;
+}
+
 // ── Read mmx API key ─────────────────────────────────────
+// v1.4.0: F11 - silent credential access。读 mmx config 是默认行为，
+// 但 server 启动 banner 会明确告知（见 listen() 末尾）。
 function getMmxKey() {
   try {
     const config = JSON.parse(fs.readFileSync(MMX_CONFIG, 'utf8'));
@@ -16,13 +48,60 @@ function getMmxKey() {
 }
 
 function getReqKey(req) {
-  return req.headers['x-mmx-api-key'] || getMmxKey();
+  // v1.4.0: F3 - 默认拒绝 request header 透传的 API key，避免本机 server 变成 proxy。
+  // 开启方式：node mmx-monitor-server.js --allow-header-key
+  if (FLAGS.allowHeaderKey && req.headers['x-mmx-api-key']) {
+    return req.headers['x-mmx-api-key'];
+  }
+  return getMmxKey();
 }
 
 
 
 function parseJson(raw) {
   try { return JSON.parse(raw); } catch { return null; }
+}
+
+// ── v1.5.0: 24h usage history (ring buffer) ────────────────
+// 每次 /api/token_plan 调用后写入一行 JSONL。文件按 mtime + 行数 trim 到 24h。
+const HISTORY_FILE = path.join(__dirname, 'history.jsonl');
+const HISTORY_MAX_AGE_MS = 24 * 3600 * 1000;
+
+function appendHistory(snapshot) {
+  try {
+    const line = JSON.stringify({ ts: Date.now(), ...snapshot }) + '\n';
+    fs.appendFileSync(HISTORY_FILE, line);
+    // Trim：删 24h 前的行
+    trimHistory();
+  } catch (e) {
+    console.warn('[history] append failed:', e.message);
+  }
+}
+
+function trimHistory() {
+  try {
+    if (!fs.existsSync(HISTORY_FILE)) return;
+    const lines = fs.readFileSync(HISTORY_FILE, 'utf8').split('\n').filter(Boolean);
+    const cutoff = Date.now() - HISTORY_MAX_AGE_MS;
+    const kept = lines.filter(l => {
+      try { return (JSON.parse(l).ts || 0) >= cutoff; }
+      catch { return false; }
+    });
+    if (kept.length < lines.length) {
+      fs.writeFileSync(HISTORY_FILE, kept.join('\n') + (kept.length ? '\n' : ''));
+    }
+  } catch {}
+}
+
+function readHistory(hours) {
+  try {
+    if (!fs.existsSync(HISTORY_FILE)) return [];
+    const cutoff = Date.now() - (hours || 24) * 3600 * 1000;
+    const lines = fs.readFileSync(HISTORY_FILE, 'utf8').split('\n').filter(Boolean);
+    return lines
+      .map(l => { try { return JSON.parse(l); } catch { return null; } })
+      .filter(x => x && x.ts >= cutoff);
+  } catch { return []; }
 }
 
 function httpsGet(url, headers, body) {
@@ -267,11 +346,21 @@ async function probeApiLatency(apiKey) {
 
 // ── Server ───────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-MMX-API-Key');
+  // v1.4.0: F5 - CORS 严格化。只允许本机 / file:// 同源。
+  const allowOrigin = corsOriginFor(req);
+  if (allowOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    // F3: 只在 allowHeaderKey 开启时才暴露 X-MMX-API-Key header
+    res.setHeader('Access-Control-Allow-Headers', FLAGS.allowHeaderKey ? 'Content-Type, X-MMX-API-Key' : 'Content-Type');
+    res.setHeader('Vary', 'Origin');
+  }
 
-  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+  if (req.method === 'OPTIONS') {
+    res.writeHead(allowOrigin ? 204 : 403);
+    res.end();
+    return;
+  }
 
   const urlPath = new URL(req.url, `http://localhost:${PORT}`).pathname;
   const apiKey = getReqKey(req);
@@ -299,6 +388,12 @@ const server = http.createServer(async (req, res) => {
       const fourHTotal  = fourHModels.reduce((s, m) => s + m.total, 0);
       const fourHUsed   = fourHModels.reduce((s, m) => s + m.used, 0);
       const minResetMs = fourHModels.length ? Math.min(...fourHModels.map(m => m.remains_time_ms)) : 0;
+      // v1.5.0: 写一行 history（环形 buffer）。只记 totalUsed/totalLimit 摘要 + 模型快照。
+      appendHistory({
+        used:  fourHUsed,
+        total: fourHTotal,
+        models: models.map(m => ({ name: m.name, used: m.used, total: m.total, window: m.window })),
+      });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         ok: true,
@@ -316,9 +411,27 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── GET /api/history ──────────────────────────────────────────
+  // v1.5.0: 返回最近 N 小时的 usage history 采样（默认 24h）。
+  // 客户端可以用这数据画趋势线。
+  if (req.method === 'GET' && urlPath === '/api/history') {
+    const hours = Math.max(1, Math.min(168, Number(new URL(req.url, `http://localhost:${PORT}`).searchParams.get('hours')) || 24));
+    const rows = readHistory(hours);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, hours, count: rows.length, data: rows }));
+    return;
+  }
+
   // ── GET /api/probe ─────────────────────────────────────
   // Does a real streaming API call and returns actual performance data
+  // v1.4.0: F4 - probe 默认开启会发起真实 inference 请求消耗配额。
+  // 担心被误触消耗的话用 --no-probe flag 关闭，关掉后端点返回 403。
   if (req.method === 'GET' && urlPath === '/api/probe') {
+    if (!FLAGS.probeEnabled) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'probe disabled by --no-probe' }));
+      return;
+    }
     const [probeResult, burstResult, ordinaryResult] = await Promise.all([
       probeApiLatency(apiKey),
       probeBurstApi(apiKey),
@@ -363,5 +476,13 @@ server.listen(PORT, () => {
   console.log(`MiniMax Monitor API -> http://localhost:${PORT}`);
   console.log('  GET /api/token_plan — MiniMax token_plan');
   console.log('  GET /api/probe     — real API latency probe');
+  console.log('  GET /api/history   — 24h usage history (v1.5.0)');
   console.log('  GET /health        — health check');
+  // v1.4.0: F11 - 明确告知本服务会读 ~/.mmx/config.json 拿 MiniMax API key。
+  console.log('');
+  console.log('[security] v1.4.0 security posture:');
+  console.log(`  - CORS allowlist: 127.0.0.1/localhost/file:// (no longer *)`);
+  console.log(`  - Header API key: ${FLAGS.allowHeaderKey ? 'ALLOWED (--allow-header-key)' : 'DENIED (use local ~/.mmx/config.json only)'}`);
+  console.log(`  - Probe endpoint: ${FLAGS.probeEnabled ? 'ENABLED' : 'DISABLED (--no-probe)'}`);
+  console.log(`  - Reads mmx config from ${MMX_CONFIG}`);
 });

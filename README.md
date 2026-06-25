@@ -1,8 +1,10 @@
-# MiniMax 套餐监控中心
+# MiniMax Package Monitor
 
-实时仪表盘，监控 MiniMax API 套餐使用情况，支持配额、速率探针、本周用量追踪。
+[中文版](./README_zh.md)
 
-> **当前版本：v1.2.0** | [更新日志](#更新日志)
+Real-time dashboard for monitoring MiniMax API package usage — quota tracking, rate probing, weekly usage monitoring, and 24h history.
+
+> **Current Version: v1.5.0** | [Changelog](#changelog) | [Security](#security--data-flow)
 
 ![Dashboard](demo.png)
 
@@ -10,138 +12,208 @@
 
 ---
 
-## 更新日志
+## What's New in v1.5.0
 
-### v1.2.0（2026-06-23）
-- 🆙 **适配官方 Token Plan 新格式**：官方 `/v1/token_plan/remains` 不再返回 `*_usage_count` / `*_total_count`，改为只返 `*_remaining_percent`（剩余百分比）。Server 推导已用%，前端契约保持不变。
-- 🆙 **飞书卡片文案同步**：5小时配额 / 模型明细 / 本周配额全部展示"已用 X% / 剩余 Y%"。
+- 🆕 **24h usage history endpoint** (`GET /api/history`) — see how your quota usage trends over the day, persisted in a local ring buffer
+- 🆕 **Responsive layout** — main panel auto-shrinks on small viewports (`calc(min(560px, 100vh - 150px))`)
+- 🆕 **Bilingual README** — `README.md` (English, this file) + `README_zh.md` (中文)
+- 🔒 Hardened CORS, header key policy, and localStorage handling landed in v1.4.0 — see [Security & Data Flow](#security--data-flow)
 
-### v1.1.0（2026-05-02）
-- 🆕 **标签页自动刷新**：切换回浏览器标签时，自动触发一次配额和速率数据刷新，不再依赖定时轮询
+## Changelog
 
-### v1.0.0（2026-04-26）
-- 初始版本，支持配额仪表盘 + 速率探针 + 飞书推送
+### v1.5.0 (2026-06-25)
+- 🆕 **`/api/history` endpoint** — Server appends a `(timestamp, usedPct, modelSnapshot)` row to `history.jsonl` on every quota fetch, retains last 24h, exposes via `GET /api/history?hours=24`. Frontend can plot trend lines without making its own requests.
+- 🆕 **Responsive main panel height** — `min(560px, 100vh - 150px)`. Smaller laptop screens no longer force vertical scroll.
+- 🆕 **Bilingual docs** — this file + `README_zh.md` with cross-links.
+
+### v1.4.0 (2026-06-25)
+- 🔒 **CORS strict allowlist** — `Access-Control-Allow-Origin: *` replaced by `127.0.0.1 / localhost / file://` allowlist. Malicious web pages can no longer reach the local server.
+- 🔒 **Header API key denied by default** — Server ignores `X-MMX-API-Key` request header unless `--allow-header-key` flag is set. Prevents local server from being abused as a credentialed proxy.
+- 🔒 **localStorage key not auto-loaded** — API key is no longer automatically reused from `localStorage`. Opt-in "Remember 24h" toggle expires automatically.
+- 🔒 **`--no-probe` flag** — Disable `/api/probe` endpoint (returns 403) to avoid real inference calls and token costs.
+- 📄 **Security & Data Flow docs** — Listed in SKILL.md / README below.
+
+### v1.3.0 (2026-06-24)
+- 🆙 **"Plan not enabled" detection for Video** — Distinguish `current_interval_status=3` for video (plan disabled, calls rejected) from real "unlimited" (voice/music/image).
+- 🆙 **Plan comparison banner** — Hailuo Video card embeds a 3-tier upgrade panel (Plus ¥49 / Max ¥119 / Ultra ¥469) when status indicates plan not enabled.
+- 🆙 **"No weekly limit" recognition** — `current_weekly_status=3` models show "无周限" instead of misleading "0% / 100%".
+- 🐛 **Gauge dasharray fix** — Original code hardcoded `515` (= 2πr) for a half-circle path (πr ≈ 257.6). Switched to `pathLength="100"` for normalized dasharray.
+- 🐛 **SSE stream parse fix** — Burst probe switched to `data.trimStart().startsWith('data:')` (was failing on multi-line SSE).
+- 🔧 **Port 9876 → 9877** — Avoid collision with `minimax-embedding-adapter`.
+
+### v1.2.0 (2026-06-23)
+- 🆙 **Adapt to new official Token Plan format** — `/v1/token_plan/remains` no longer returns `*_usage_count` / `*_total_count`, only `*_remaining_percent`. Server derives `used` from `(100 - remaining)`, frontend contract unchanged.
+- 🆙 **Feishu card text sync** — All quota numbers now show "used X% / remain Y%" instead of "0/100" base.
+
+### v1.1.0 (2026-05-02)
+- 🆕 **Auto-refresh on tab switch** — Switching back to the browser tab triggers a quota + rate refresh automatically.
+
+### v1.0.0 (2026-04-26)
+- Initial release with quota dashboard + rate probe + Feishu notification.
 
 ---
 
-## 功能特性
+## Features
 
-- 📊 **实时配额仪表盘** — 5小时窗口用量环形图 + 各模型明细
-- ⏱️ **重置倒计时** — 自动计算距离窗口重置的剩余时间
-- 📈 **API 速率探针** — TTFT、P50、P99、Token 速度实测
-- 📅 **本周配额追踪** — 有周限的模型显示本周已用/总额
-- 🔔 **飞书推送（可选）** — 查询后推送到飞书群
+- 📊 **Real-time Quota Dashboard** — 5-hour window usage ring chart + per-model details
+- ⏱️ **Reset Countdown** — Auto-calculates remaining time until window reset
+- 📈 **API Rate Probe** — TTFT, P50, latency, token speed measurements
+- 📅 **Weekly Quota Tracking** — For models with weekly limits
+- 📜 **24h Usage History** (v1.5.0) — Trend lines from local `history.jsonl` ring buffer
+- 🔔 **Feishu Notification (optional)** — Push to Feishu group after query
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 前置要求
+### Prerequisites
 
-- Node.js ≥ 18（运行后端服务）
-- Python 3（飞书推送可选）
+- Node.js ≥ 18 (runs backend service)
+- Python 3 (optional, for Feishu push)
 
-### 安装
+### Install
 
 ```bash
-# 克隆或下载本项目后，进入目录
+# Clone or download, then cd into the project
 cd minimax-monitor
 
-# 无需 npm install，纯 Node.js 标准库零依赖
+# No npm install needed — pure Node.js standard library, zero deps
 ```
 
-### 启动
+### Run
 
 ```bash
-# 1. 启动后端服务
+# 1. Start backend service
 node mmx-monitor-server.js
 
-# 2. 打开监控页面（macOS 自动唤起浏览器）
+# 2. Open monitoring page (macOS auto-opens browser)
 open mmx-monitor.html
 # Windows: start mmx-monitor.html
 # Linux: xdg-open mmx-monitor.html
 ```
 
-### 查询配额
+### Query Quota
 
-页面打开后，点击输入框上方的 **查询** 按钮（API Key 会自动读取本地 mmx 配置），或手动粘贴 Key 后查询。
+After the page loads, click the **Query** button above the input box (API Key auto-reads from `~/.mmx/config.json`), or paste the Key manually and query.
 
 ---
 
-## 配置文件
+## Security & Data Flow (v1.4.0+)
 
-### 环境变量（飞书推送，可选）
+**This service, by default, will**:
+
+1. **Read local credentials** — Loads `api_key` from `~/.mmx/config.json` (MiniMax Token Plan key).
+2. **Poll MiniMax API every 60s** — Calls `https://www.minimaxi.com/v1/token_plan/remains` for quota data.
+3. **Probe inference performance every 60s** (default ON) — Sends real streaming + concurrent requests to `api.minimaxi.com/v1/text/chatcompletion_v2`. Counts toward token billing.
+4. **Optional Feishu push** — Only when `mmx_quota_feishu.py` is run manually. Default OFF.
+
+**This service will NOT**:
+
+- Upload your API key to any remote.
+- Send the API key to Feishu. Only **quota query results** (percentages) are pushed.
+- Allow cross-origin web pages to reach the local server (CORS allowlist limits to `127.0.0.1 / localhost / file://`).
+
+### Startup options
 
 ```bash
-# 复制模板
-cp .env.example .env
+# Default config (recommended)
+node mmx-monitor-server.js
 
-# 填写以下变量
-MINIMAX_API_KEY=sk-cp-…here      # MiniMax API Key（Token Plan 类型）
-FEISHU_APP_ID=your-app-id                 # 飞书应用 App ID
-FEISHU_APP_SECRET=***        # 飞书应用 App Secret
-FEISHU_CHAT_ID=your-chat-id               # 飞书群 ID
+# Disable active probing (save quota)
+node mmx-monitor-server.js --no-probe
+
+# Allow header API key passthrough (advanced, your responsibility)
+node mmx-monitor-server.js --allow-header-key
 ```
 
-### mmx 本地配置（自动读取）
+### Browser-side API Key (v1.4.0+)
 
-后端服务会自动读取 `~/.mmx/config.json` 中的 API Key，无需手动配置。
+By default, the API key is **NOT** auto-loaded from `localStorage`. To skip re-typing for 24h:
 
----
-
-## 文件说明
-
-| 文件 | 说明 |
-|------|------|
-| `mmx-monitor.html` | 监控页面（纯前端，单文件 HTML） |
-| `mmx-monitor-server.js` | 本地代理服务（Node.js，端口 9877） |
-| `mmx_quota_feishu.py` | 飞书推送脚本（可选） |
-| `demo.png` | 监控页面截图 |
-| `README.md` | 本文件 |
-| `LICENSE` | MIT 开源协议 |
+- Tick "Remember 24h" in the page header before entering the Key
+- Auto-clears on expiry
 
 ---
 
-## API 接口
+## Configuration
 
-后端提供以下 REST 接口：
+### Environment Variables (Feishu push, optional)
 
-| 接口 | 说明 |
-|------|------|
-| `GET /api/token_plan` | 从 MiniMax 官方获取配额（推荐） |
-| `GET /api/quota` | 通过 mmx CLI 获取配额 |
-| `GET /api/probe` | 实时 API 延迟探针 |
-| `GET /health` | 健康检查 |
+```bash
+# Copy template
+cp .env.example .env
+
+# Fill in the following
+MINIMAX_API_KEY=sk-cp-…here           # MiniMax API Key (Token Plan type)
+FEISHU_APP_ID=your-app-id             # Feishu App ID
+FEISHU_APP_SECRET=your-app-secret     # Feishu App Secret
+FEISHU_CHAT_ID=your-chat-id           # Feishu Group ID
+```
+
+### mmx Local Config (auto-read)
+
+Backend auto-reads API Key from `~/.mmx/config.json` — no manual config needed.
 
 ---
 
-## 飞书推送（可选）
+## File Overview
 
-### 方式一：命令行推送
+| File | Description |
+|------|-------------|
+| `mmx-monitor.html` | Monitoring page (pure frontend, single HTML file) |
+| `mmx-monitor-server.js` | Local proxy service (Node.js, port 9877) |
+| `mmx_quota_feishu.py` | Feishu push script (optional) |
+| `history.jsonl` | 24h usage history (v1.5.0+, auto-generated) |
+| `CHANGELOG.md` | Full changelog with cross-version links |
+| `demo.png` | Screenshot |
+| `README.md` | This file (English) |
+| `README_zh.md` | Chinese version (中文版) |
+| `LICENSE` | MIT License |
+
+---
+
+## API Endpoints
+
+Backend provides the following REST endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/token_plan` | Fetch quota from MiniMax official (recommended) |
+| `GET /api/probe` | Real-time API latency probe (`--no-probe` returns 403) |
+| `GET /api/history?hours=24` | 24h usage history from local ring buffer (v1.5.0) |
+| `GET /health` | Health check |
+
+> `/api/quota` was removed in v1.3.0 (replaced by `/api/token_plan`).
+
+---
+
+## Feishu Push (Optional)
+
+### Method 1: Command Line
 
 ```bash
 python3 mmx_quota_feishu.py <api_key>
 ```
 
-### 方式二：配合定时任务
+### Method 2: Cron Job
 
-设置 cron 定时推送，结合 `.env` 中的飞书配置。
-
----
-
-## 常见问题
-
-**Q: 点查询后显示"连接失败"？**
-A: 请确认后端服务已启动（`node mmx-monitor-server.js`）。服务未运行时前端会提示"请先启动后端服务"。
-
-**Q: 端口 9877 被占用？**
-A: 停止占用该端口的进程，或修改 `mmx-monitor-server.js` 中的 `PORT` 常量。
-
-**Q: 飞书推送失败？**
-A: 确认 `.env` 中 `FEISHU_APP_ID`、`FEISHU_APP_SECRET`、`FEISHU_CHAT_ID` 均已填写，且飞书机器人已加入目标群。
+Set up a cron job to push regularly, combined with `.env` Feishu config.
 
 ---
 
-## 开源协议
+## FAQ
 
-MIT License - 详见 [LICENSE](LICENSE) 文件。
+**Q: Shows "Connection Failed" after clicking Query?**
+A: Make sure the backend service is running (`node mmx-monitor-server.js`). Frontend prompts "Please start the backend service first" when service is down.
+
+**Q: Port 9877 already in use?**
+A: Stop the process using that port, or modify the `PORT` constant in `mmx-monitor-server.js`.
+
+**Q: Feishu push fails?**
+A: Confirm `FEISHU_APP_ID`, `FEISHU_APP_SECRET`, `FEISHU_CHAT_ID` are all filled in `.env`, and the Feishu bot has been added to the target group.
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE).

@@ -1,7 +1,7 @@
 ---
 name: minimax-monitor
-description: MiniMax 套餐监控中心。触发词：查配额、监控中心、minimax监控。
-version: 1.2.0
+description: MiniMax 套餐监控中心。触发词：打开 minimax 监控、minimax 监控、minimax 仪表盘。
+version: 1.5.0
 ---
 
 # MiniMax 套餐监控中心
@@ -10,6 +10,22 @@ version: 1.2.0
 > 当前版本：v1.3.0
 
 ## 更新日志
+
+### v1.5.0（2026-06-25）
+- 🆕 **`/api/history` 端点**：server 每次 `fetchQuota` 时把 `(timestamp, usedPct, modelSnapshot)` 追加到 `history.jsonl`，保留最近 24h（自动 trim）。`GET /api/history?hours=24` 返回历史采样，供前端画趋势线。
+- 🆕 **主面板响应式高度**：`min(560px, vh-150px)`，小屏笔记本（700-800px 高度）不滚动。JS 调 fitMainH() 写 `--main-h` CSS 变量；main-grid `height: var(--main-h, 560px)` + `max-height: calc(100vh - 150px)` 双闸。
+- 🆕 **双语 README**：`README.md`（英文）+ `README_zh.md`（中文）互相跳转。
+- 🆕 **`.gitignore` 加 `history.jsonl`**：24h 滚动 buffer 不入 git。
+- 🔧 **SKILL.md frontmatter version 同步到 1.5.0**。
+
+### v1.4.0（2026-06-25）
+- 🔒 **安全加固**（响应 ClawHub security-audit 13 条 finding）：
+  - **F5 CORS `*` → 本机白名单**：`Access-Control-Allow-Origin` 从 `*` 改成 `127.0.0.1/localhost/file://` allowlist。恶意网页不再能跨域调本机 server 消耗你的 MiniMax 配额。
+  - **F3 header API key 默认拒绝**：server 默认忽略 `X-MMX-API-Key` header，只用本机 `~/.mmx/config.json` 的 key。需要使用 header key 时显式开启 `node mmx-monitor-server.js --allow-header-key`。
+  - **F11 凭证读 取明确告知**：启动 banner 列出 “读取 ~/.mmx/config.json” + CORS / header key / probe 状态。
+  - **F13 localStorage 默认不加载**：API key 默认每次重启重新输入。加勾选 “记住 24 小时” 后才临时写入 localStorage，过期自动清除。
+  - **F4 probe 可关闭**：担心真实 inference 探测消耗配额的话，用 `node mmx-monitor-server.js --no-probe`，`/api/probe` 端点返回 403。
+  - **F6/F10 README / SKILL.md 加 Security & Data Flow 章节**（见下文）。
 
 ### v1.3.0（2026-06-24）
 - 🆙 **识别 `current_interval_status === 3` 的“套餐未启用”场景**：官方 API 在视频额度上会返 status=3 但实际调 API 被拒“用量上限”。这跟真正的“无限额”（语音/音乐/图像）同码，元数据无法区分。后端加 `interval_unlimited: true` 字段，前端模型卡片显示“套餐未启用 · 不可调用”（红字 + 灰底 + bar 灰调），不参与顶部 4h 聚合。
@@ -32,8 +48,26 @@ version: 1.2.0
 
 # MiniMax 套餐监控中心
 
-> **触发词**：查配额 / 打开配额监控 / 启动 MiniMax 监控
+> **触发词**：打开 minimax 监控 / minimax 监控 / minimax 仪表盘
 > 启动后 **自动用 `open` 命令打开 HTML 页面**（macOS 直接唤起浏览器），无需手动拖入。
+
+## Security & Data Flow（v1.4.0）
+
+本技能默认会：
+
+1. **读取本地凭证**：从 `~/.mmx/config.json` 读取 `api_key`（MiniMax Token Plan key）。
+2. **定时调用 MiniMax API**：每 60s 调 `https://www.minimaxi.com/v1/token_plan/remains` 拿配额数据。
+3. **主动探测 MiniMax 推理性能**（v1.4.0 默认开启）：每 60s 发真实 streaming / concurrent 请求到 `api.minimaxi.com/v1/text/chatcompletion_v2`，计入会产生 token 费用。
+4. **可选推送到飞书**（需手动运行 `mmx_quota_feishu.py`，默认不开启）。
+
+**不会做**：
+
+- 不会把 API key 上传到任何远程（仅本地使用）。
+- 不会把 MiniMax API key 推到 Feishu；推送的是**配额查询结果**（百分比数字）。
+- 不会允许跨源网页调用本机 server（CORS allowlist 限定 `127.0.0.1/localhost/file://`）。
+
+**想关闭主动探测**（节省配额）：`node mmx-monitor-server.js --no-probe`
+**想使用 header 透传 key**（高级用户，需要自负责）：`node mmx-monitor-server.js --allow-header-key`
 
 ## 技能简介
 
