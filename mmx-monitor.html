@@ -148,13 +148,12 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 </div>
 <div class="status-strip">
   <div class="status-item"><span class="lbl">配额数据刷新</span><span class="val cyan" id="stripRefresh">--:--</span></div>
-  <div class="status-item"><span class="lbl">速率测试</span><span class="val" style="color:rgba(255,200,80,0.85)">点击右侧</span></div>
   <div class="status-item hl"><span class="lbl">5小时重置时间</span><span class="val" id="stripReset">剩余 --:--</span></div>
 </div>
 <div class="apikey-bar">
   <label>API Key</label>
-  <input type="password" id="apiKeyInput" placeholder="留空则自动读取本地 ~/.mmx/config.json" style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e0e0e0;font-family:"Roboto Mono",monospace;font-size:18px;min-width:0;padding:10px 14px;outline:none;transition:border-color .2s;" />
-  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap;cursor:pointer" title="勾选后将 MiniMax API key 存到本机浏览器的 localStorage，24 小时内免输入。⚠️ 本机 XSS / 恶意浏览器扩展 / 共享电脑可读取该 key。共享电脑请勿勾选。" ><input type="checkbox" id="rememberKey" />记住 24 小时 ⚠️</label>
+  <input type="password" id="apiKeyInput" placeholder="手动输入 或 点右侧加载本地凭证" style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e0e0e0;font-family:"Roboto Mono",monospace;font-size:18px;min-width:0;padding:10px 14px;outline:none;transition:border-color .2s;" />
+  <button class="btn-save" id="btnLoadCred" style="background:rgba(255,180,0,0.85);color:#1a1a1a" title="主动点击才会从本地 ~/.mmx/config.json 读取 API key。不会自动读取，也不会存储到浏览器。" >加载本地凭证</button>
   <button class="btn-save" id="btnSave">查询</button>
 </div>
 <div id="errorBanner" style="display:none;margin:8px 28px 0;padding:10px 16px;background:rgba(198,40,40,0.9);border:1px solid rgba(255,80,80,0.4);border-radius:8px;color:#fff;font-size:13px;text-align:center;backdrop-filter:blur(10px);">
@@ -274,34 +273,28 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
     }
     fitMainH();
     window.addEventListener('resize', fitMainH);
+    // v1.6.0 (F9): 删 localStorage 24h 记忆机制。每次重启重新输入。
+    // v1.6.0 (F8): 不再启动自动读 ~/.mmx/config.json。用户点 "加载本地凭证" 按钮才读。
     document.getElementById('btnSave').onclick=function(){
       var raw=document.getElementById('apiKeyInput').value.trim();
-      var remember=document.getElementById('rememberKey').checked;
-      // 清除旧值
-      localStorage.removeItem('mmx_api_key');
-      localStorage.removeItem('mmx_api_key_expires');
-      if(raw && remember){
-        apiKey=raw;
-        var expires=Date.now()+24*3600*1000;
-        localStorage.setItem('mmx_api_key',apiKey);
-        localStorage.setItem('mmx_api_key_expires',String(expires));
-      }else if(raw){
-        apiKey=raw;
-      }
+      if(raw)apiKey=raw;
       startMon();
     };
-    // 启动时如果勾选过记住且未过期才加载
-    var stored=localStorage.getItem('mmx_api_key');
-    var exp=Number(localStorage.getItem('mmx_api_key_expires')||0);
-    if(stored && exp>Date.now()){
-      apiKey=stored;
-      document.getElementById('apiKeyInput').value=stored;
-      document.getElementById('rememberKey').checked=true;
-    }else if(stored){
-      // 过期清理
-      localStorage.removeItem('mmx_api_key');
-      localStorage.removeItem('mmx_api_key_expires');
-    }
+    // v1.6.0: "加载本地凭证" 按钮 → confirm → 调 /api/load_cred
+    document.getElementById('btnLoadCred').onclick=function(){
+      if(!window.confirm('将读取本地 ~/.mmx/config.json 拿 MiniMax API key，并存入本次会话内存（不写浏览器、不写文件）。\n\n确认继续吗？'))return;
+      var btn=this;btn.disabled=true;btn.textContent='⏳ 加载中...';
+      fetch(API_BASE+'/api/load_cred').then(function(r){return r.json();}).then(function(d){
+        if(d&&d.ok&&d.key){
+          apiKey=d.key;
+          document.getElementById('apiKeyInput').value=d.key;
+          btn.textContent='✅ 已加载';
+        }else{
+          btn.textContent='❌ '+((d&&d.error)||'未找到 ~/.mmx/config.json');
+        }
+      }).catch(function(e){btn.textContent='❌ '+e.message;}).finally(function(){setTimeout(function(){btn.disabled=false;btn.textContent='加载本地凭证';},3000);});
+    };
+    // v1.6.0: 启动时不读 config.json，不读 localStorage。直接 startMon。
     startMon();
   });
 })();

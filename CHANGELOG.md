@@ -18,6 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **替代方案**：以后如需飞书推送，建议拆成独立 skill（如 `mmx-quota-feishu`），调用本技能的 `GET /api/token_plan` 端点，避免单技能同时承担"配额查询 + 第三方推送"双职责。
 
 ### Changed
+- 🔒 **凭证按需加载**（F8 / F14 严重度大降）。
+  - **问题**：v1.4.0 / v1.5.0 启动后 server 静默读 `~/.mmx/config.json` 拿 API key，审计器认这个为 "credential-bearing proxy"（F8 0.98，最高置信度）。
+  - **新设计**：
+    1. Server 启动**不读** `~/.mmx/config.json`。`credLoadedKey` 默认空。
+    2. 仪表盘顶部加 "加载本地凭证" 黄色按钮（API Key 栏内）。
+    3. 点击 → `window.confirm()`："将读本地 config.json，存入 server 内存（不写浏览器 / 不写文件 / 重启丢失），确认？"。
+    4. 用户确认 → 调 `POST /api/load_cred`，Referer 校验通过后读 config.json → key 存到 `credLoadedKey` → 响应 key 到前端 → 填入输入框。
+    5. 未加载 key 时调 `/api/token_plan` / `/api/probe` → 返 401 + 友好提示。
+  - **节省**：未点击时 server 完全不读本地凭证，零文件访问。
+  - **代码改动**：
+    - server.js: 重命名 `getMmxKey()` → `readMmxConfigKey()`（只读不存）；删 `getReqKey` 里自动 fallback；加 `POST /api/load_cred` handler + Referer 校验；加 `requireKeyOrFail()` 中间件在 `/api/token_plan` / `/api/probe` 入口检查；banner 加 "Credential: ON-DEMAND ONLY"。
+- 🔒 **删除 localStorage 24h 记忆**（F9 / F12 永久消除）。
+  - **问题**：v1.4.0 加的 "记住 24 小时" checkbox 把 key 存到浏览器 localStorage，XSS / 恶意扩展 / 共享电脑可读。F9 0.97 / F12 0.95。
+  - **新设计**：删 localStorage 机制。每次重启：手动输入 Key，或点 "加载本地凭证" 读 config.json。
+  - **代码改动**：
+    - mmx-monitor.html: 删 `rememberKey` checkbox + ⚠️ tooltip + 3 处 localStorage 引用 + 启动恢复那段；删 `localStorage.removeItem` / `localStorage.setItem` / `localStorage.getItem` 全部逻辑。
 - 🔒 **速率测试改按需触发**（F6 / F7 永久消除）。
   - **问题**：v1.4.0 / v1.5.0 每 60s 自动发 5 次 chat completion 请求（×~180 token），24h = ~7200 次 / ~720K token 上限。审计器认这个为 "active billable probes going beyond passive viewing"，F6 88% / F7 96% 置信度。
   - **新设计**：

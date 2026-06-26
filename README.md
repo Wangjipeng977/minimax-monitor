@@ -100,12 +100,14 @@ After the page loads, click the **Query** button above the input box (API Key au
 
 **This service, by default, will**:
 
-1. **Read local credentials** — Loads `api_key` from `~/.mmx/config.json` (MiniMax Token Plan key).
+1. **Credential loaded on demand** (v1.6.0) — Does **not** auto-read `~/.mmx/config.json` on startup. Dashboard "加载本地凭证" button + confirm triggers `POST /api/load_cred` which reads the file into server process memory (not browser, not disk). Server restart clears it. Endpoints requiring key return 401 until loaded.
 2. **Poll MiniMax API every 60s** — Calls `https://www.minimaxi.com/v1/token_plan/remains` for quota data.
-3. **Probe inference performance every 60s** (default ON) — Sends real streaming + concurrent requests to `api.minimaxi.com/v1/text/chatcompletion_v2`. Counts toward token billing.
+3. **Probe inference performance ON DEMAND ONLY** (v1.6.0) — Dashboard button triggers 5 real chat completion requests (×~180 token). Auto timer removed.
 
 **This service will NOT**:
 
+- Auto-read `~/.mmx/config.json` on startup (v1.6.0).
+- Persist your API key in browser localStorage (v1.6.0).
 - Upload your API key to any remote.
 - Allow cross-origin web pages to reach the local server (CORS allowlist limits to `127.0.0.1 / localhost / file://`).
 
@@ -119,12 +121,14 @@ node mmx-monitor-server.js
 node mmx-monitor-server.js --allow-header-key
 ```
 
-### Browser-side API Key (v1.4.0+)
+### Browser-side API Key (v1.6.0+)
 
-By default, the API key is **NOT** auto-loaded from `localStorage`. To skip re-typing for 24h:
+**No more localStorage 24h persistence.** Each session requires:
 
-- Tick "Remember 24h" in the page header before entering the Key
-- Auto-clears on expiry
+- Manually type Key into the input field; or
+- Click "加载本地凭证" button (loads from `~/.mmx/config.json` to server process memory)
+
+Both are lost when server restarts.
 
 ---
 
@@ -168,8 +172,9 @@ Backend provides the following REST endpoints:
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/token_plan` | Fetch quota from MiniMax official (recommended) |
-| `GET /api/probe` | On-demand API latency probe (v1.6.0+: user clicks button, confirm dialog) |
+| `POST /api/load_cred` | Load API key from `~/.mmx/config.json` (v1.6.0: user clicks button, confirm dialog) |
+| `GET /api/token_plan` | Fetch quota from MiniMax official (requires loaded key) |
+| `GET /api/probe` | On-demand API latency probe (v1.6.0+: user clicks button, confirm dialog, requires loaded key) |
 | `GET /api/history?hours=24` | 24h usage history from local ring buffer (v1.5.0) |
 | `GET /health` | Health check |
 

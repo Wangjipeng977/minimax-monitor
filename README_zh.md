@@ -100,15 +100,17 @@ open mmx-monitor.html
 
 **本服务默认会**：
 
-1. **读取本地凭证**：从 `~/.mmx/config.json` 读取 `api_key`（MiniMax Token Plan key）
+1. **凭证按需加载**（v1.6.0）：启动**不读** `~/.mmx/config.json`。仪表盘顶部点 "加载本地凭证" 按钮 + confirm 才会从该文件读 API key，存入 server 进程内存（不写浏览器 / 不写文件 / server 重启后丢失）。未加载时所有需要 key 的端点返 401。
 2. **每 60s 调 MiniMax API**：调 `https://www.minimaxi.com/v1/token_plan/remains` 拿配额数据
 3. **速率测试需用户主动触发**（v1.6.0+）：仪表盘速率面板不再自动调用 chat completion。点 "开始速率测试" 按钮才会发起 5 次真实 chat 请求（×~180 token 上限），UI 红字提示 + 二次确认。
 
 **本服务不会**：
 
-- 不会把 API key 上传到任何远程
-- 不会允许跨源网页调用本机 server（CORS allowlist 限定 `127.0.0.1 / localhost / file://`）
-- 不会在后台悄悄消耗你的 chat 配额（v1.6.0 起 probe 改按需触发）
+- 启动时自动读取本地凭证（v1.6.0 起改按需）
+- 把 API key 存到浏览器 localStorage（v1.6.0 起删除）
+- 把 API key 上传到任何远程
+- 允许跨源网页调用本机 server（CORS allowlist 限定 `127.0.0.1 / localhost / file://`）
+- 在后台悄悄消耗你的 chat 配额（v1.6.0 起 probe 改按需触发）
 
 ### 启动选项
 
@@ -122,10 +124,11 @@ node mmx-monitor-server.js --allow-header-key
 
 ### 浏览器中的 API Key
 
-v1.4.0 起，**默认不会**从 localStorage 自动加载 API Key。如果想 24 小时内免输入：
+v1.6.0 起**不再使用** localStorage 24h 记忆。每次重启需要：
+- 在输入框手动输入 Key；或
+- 点顶部 "加载本地凭证" 按钮（读 `~/.mmx/config.json` 到本次会话内存）
 
-- 页面顶部"记住 24 小时"勾选后输入 Key
-- 到期后自动清除
+Server 重启后必须重新加载（内存不持久）。
 
 ---
 
@@ -169,8 +172,9 @@ MINIMAX_API_KEY=sk-cp-…here      # MiniMax API Key（Token Plan 类型）
 
 | 接口 | 说明 |
 |------|------|
-| `GET /api/token_plan` | 从 MiniMax 官方获取配额（推荐） |
-| `GET /api/probe` | 按需 API 延迟探针（v1.6.0+ 用户点击按钮，弹 confirm 二次确认） |
+| `POST /api/load_cred` | 从 `~/.mmx/config.json` 加载 API key（v1.6.0+ 用户点击按钮，弹 confirm 二次确认） |
+| `GET /api/token_plan` | 从 MiniMax 官方获取配额（需要先加载 key） |
+| `GET /api/probe` | 按需 API 延迟探针（v1.6.0+ 用户点击按钮，弹 confirm 二次确认，需要先加载 key） |
 | `GET /api/history?hours=24` | 24h 用量历史（v1.5.0） |
 | `GET /health` | 健康检查 |
 

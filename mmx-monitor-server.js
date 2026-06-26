@@ -36,9 +36,12 @@ function corsOriginFor(req) {
 }
 
 // ── Read mmx API key ─────────────────────────────────────
-// v1.4.0: F11 - silent credential access。读 mmx config 是默认行为，
-// 但 server 启动 banner 会明确告知（见 listen() 末尾）。
-function getMmxKey() {
+// v1.6.0 (F8): 不再自动读 ~/.mmx/config.json。用户点击 “加载本地凭证” 才会调
+// /api/load_cred 读一次。键存在本进程的 credLoadedKey 变量里，server 重启后丢失。
+let credLoadedKey = '';  // 按需加载后才会被填入
+let credLoadedAt = 0;     // 加载时间戳（debug / banner 显示用）
+
+function readMmxConfigKey() {
   try {
     const config = JSON.parse(fs.readFileSync(MMX_CONFIG, 'utf8'));
     return config.api_key || '';
@@ -51,7 +54,8 @@ function getReqKey(req) {
   if (FLAGS.allowHeaderKey && req.headers['x-mmx-api-key']) {
     return req.headers['x-mmx-api-key'];
   }
-  return getMmxKey();
+  // v1.6.0: 返回用户主动加载的 key。未加载则为空，所有需要 key 的请求会返 401。
+  return credLoadedKey;
 }
 
 
@@ -194,7 +198,7 @@ function clampPct(v) {
 
 // ── Ordinary (non-streaming) API probe ────────────────
 async function probeOrdinaryApi(apiKey) {
-  const key = apiKey || getMmxKey();
+  const key = apiKey;
   const testMessages = [{ role: 'user', content: 'Hi' }];
   const t0 = Date.now();
   try {
@@ -225,7 +229,7 @@ async function probeOrdinaryApi(apiKey) {
 
 // ── BURST (3 concurrent streaming) probe ───────────────
 async function probeBurstApi(apiKey) {
-  const key = apiKey || getMmxKey();
+  const key = apiKey;
   const testMessages = [{ role: 'user', content: 'Hi' }];
   const t0 = Date.now();
   const makeReq = () => httpsGet(
@@ -249,7 +253,7 @@ async function probeBurstApi(apiKey) {
 
 // ── Real API probe ───────────────────────────────────────
 async function probeApiLatency(apiKey) {
-  const key = apiKey || getMmxKey();
+  const key = apiKey;
   const testMessages = [
     { role: 'user', content: 'Hi' },
   ];
@@ -363,10 +367,46 @@ const server = http.createServer(async (req, res) => {
   const urlPath = new URL(req.url, `http://localhost:${PORT}`).pathname;
   const apiKey = getReqKey(req);
 
+  // v1.6.0 (F8): 未加载凭证就调需要 key 的端点 → 返 401。提示前端提示用户点 “加载本地凭证”。
+  function requireKeyOrFail(res) {
+    if (apiKey) return false;
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: false, error: 'API key 未加载：请点顶部 “加载本地凭证” 按钮或手动输入' }));
+    return true;
+  }
+
+  // ── POST /api/load_cred ─────────────────────────────────────────
+  // v1.6.0 (F8): 用户主动点击 “加载本地凭证” 才读 ~/.mmx/config.json。
+  // 必须满足 Referer 在本机白名单（防止恶意网页跨域调）。
+  if (req.method === 'POST' && urlPath === '/api/load_cred') {
+    const referer = req.headers['referer'] || '';
+    // 只接受本机页面发起的调用。curl / CLI 手动调用也算（本机允许空 referer，但要求 origin 检查）。
+    const allowedEmpty = !referer;  // 空 referer 也允许（curl / 本机直连）
+    const allowedOrigin = referer && ALLOWED_ORIGINS.some(o => o !== 'null' && referer.startsWith(o));
+    if (!allowedEmpty && !allowedOrigin) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'load_cred requires Referer from local origin' }));
+      return;
+    }
+    const k = readMmxConfigKey();
+    if (!k) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: `未找到 ${MMX_CONFIG} 或其中无 api_key` }));
+      return;
+    }
+    credLoadedKey = k;
+    credLoadedAt = Date.now();
+    // 响应里不返回 key，避免服务端 JSON 中间人读取（实际 key 只填到前端输入框）
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, loaded: true, key: k, msg: '已加载到会话内存，server 重启后需重新加载' }));
+    return;
+  }
+
   // ── GET /api/token_plan ────────────────────────────────
   if (req.method === 'GET' && urlPath === '/api/token_plan') {
+    if (requireKeyOrFail(res)) return;
     try {
-      const key = apiKey || getMmxKey();
+      const key = apiKey;
       const raw = await httpsGet(
         'https://www.minimaxi.com/v1/token_plan/remains',
         { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' }
@@ -427,6 +467,7 @@ const server = http.createServer(async (req, res) => {
   //   (1) Referer 是本机页面（CORS allowlist 已经检过 Origin，这里加 Referer 二次防御）
   //   (2) 响应里带回 cost_estimate 字段，前端会先弹 confirm 才发
   if (req.method === 'GET' && urlPath === '/api/probe') {
+    if (requireKeyOrFail(res)) return;
     const referer = req.headers['referer'] || '';
     // Referer 为空（curl / 本机直连）或不在本机白名单 → 拒绝
     if (referer) {
@@ -481,7 +522,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`MiniMax Monitor API -> http://localhost:${PORT}`);
   console.log('  GET /api/token_plan — MiniMax token_plan');
-  console.log('  GET /api/probe     — on-demand API latency probe (v1.6.0: 需用户主动点击)');
+  console.log('  POST /api/load_cred — load API key from ~/.mmx/config.json (v1.6.0: 需用户主动点击)');
   console.log('  GET /api/history   — 24h usage history (v1.5.0)');
   console.log('  GET /health        — health check');
   // v1.4.0: F11 - 明确告知本服务会读 ~/.mmx/config.json 拿 MiniMax API key。
@@ -490,5 +531,5 @@ server.listen(PORT, () => {
   console.log(`  - CORS allowlist: 127.0.0.1/localhost/file:// (no longer *)`);
   console.log(`  - Header API key: ${FLAGS.allowHeaderKey ? 'ALLOWED (--allow-header-key)' : 'DENIED (use local ~/.mmx/config.json only)'}`);
   console.log(`  - Probe endpoint: ON-DEMAND ONLY (v1.6.0 起不再定时调用，UI 点 "开始速率测试" 才触发)`);
-  console.log(`  - Reads mmx config from ${MMX_CONFIG}`);
+  console.log(`  - Credential: ON-DEMAND ONLY (v1.6.0 起不再自动读取，UI 点 "加载本地凭证" 才读)`);
 });
