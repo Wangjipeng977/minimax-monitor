@@ -125,12 +125,12 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
 .rate-val{font-family:"Roboto Mono",monospace;font-size:14px;font-weight:700}
 .rate-val.green{color:var(--green)}.rate-val.cyan{color:var(--cyan)}.rate-val.yellow{color:var(--yellow)}.rate-val.orange{color:var(--orange)}
 .rate-lat{font-size:9px;color:rgba(255,255,255,0.7);margin-left:3px}
-.latency-item{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.latency-item{display:flex;align-items:center;gap:7px;margin-bottom:5px;min-height:18px}
 .latency-item:last-child{margin-bottom:0}
-.lat-lbl{font-size:12px;color:rgba(255,255,255,0.8);width:44px;flex-shrink:0}
-.lat-bar-wrap{flex:1;height:4px;background:rgba(0,0,0,0.15);border-radius:2px;overflow:hidden}
+.lat-lbl{font-size:12px;color:rgba(255,255,255,0.8);width:62px;flex-shrink:0}
+.lat-bar-wrap{flex:1 1 auto;height:4px;background:rgba(0,0,0,0.15);border-radius:2px;overflow:hidden;margin-right:10px;min-width:0;max-width:calc(100% - 140px)}
 .lat-bar-fill{height:100%;border-radius:2px}
-.lat-val{font-family:"Roboto Mono",monospace;font-size:13px;color:rgba(255,255,255,0.8);width:46px;text-align:right;flex-shrink:0}
+.lat-val{font-family:"Roboto Mono",monospace;font-size:13px;color:rgba(255,255,255,0.8);width:50px;text-align:right;flex-shrink:0}
 
 .main-grid{display:grid;grid-template-columns:200px 1fr 240px;gap:6px;padding:0 28px 12px;align-items:start}
 

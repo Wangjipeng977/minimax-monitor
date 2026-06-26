@@ -4,7 +4,7 @@
 
 Real-time dashboard for monitoring MiniMax API package usage — quota tracking, rate probing, weekly usage monitoring, and 24h history.
 
-> **Current Version: v1.5.0** | [Changelog](#changelog) | [Security](#security--data-flow)
+> **Current Version: v1.6.0** | [Changelog](#changelog) | [Security](#security--data-flow)
 
 ![Dashboard](demo.png)
 

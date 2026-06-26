@@ -1,6 +1,6 @@
 ---
 name: minimax-monitor
-description: MiniMax 套餐监控中心。触发词：mmx 仪表盘启动。
+description: MiniMax 套餐监控 + 速率测试中心。触发词：mmx 仪表盘启动。
 version: 1.6.0
 permissions:
   - read:filesystem       # ~/.mmx/config.json
@@ -9,10 +9,12 @@ permissions:
   - shell:exec             # 'open' 命令启动浏览器
 ---
 
-# MiniMax 套餐监控中心
+# MiniMax 套餐监控 + 速率测试中心
 
 > **触发词**：mmx 仪表盘启动
 > 当前版本：v1.6.0
+> 
+> **两个职责**：（1）实时配额查询（默认运行，60s 轮询 token_plan）；（2）**按需速率测试**（用户点 “开始速率测试” 按钮才发起 5 次 chat completion，消耗约 180 token）。
 
 ## 更新日志
 
@@ -74,7 +76,12 @@ permissions:
 
 ## 技能简介
 
-MiniMax API 套餐使用情况实时监控，单一通道：**网页仪表盘**。
+MiniMax 套餐监控 + 速率测试 中心，两个职责：
+
+1. **套餐监控**（默认运行）：每 60s 调官方 token_plan 接口拉配额数据，画圆环 + 模型卡片 + 24h 趋势。
+2. **速率测试**（按需）：点 “开始速率测试” 按钮 → confirm → 发起 5 次 chat completion 请求，返回 TTFT / P50 / burst / token-s。
+
+**两个职责都需本地凭证**（手动输入 或 点 “加载本地凭证” 从 `~/.mmx/config.json` 读取）。
 
 ## 触发词收敛（v1.5.1）
 

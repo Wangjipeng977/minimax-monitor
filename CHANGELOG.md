@@ -10,7 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.6.0] - 2026-06-26
 
 ### Security Hardening
-本版本集中响应 ClawHub 安全审计 15 条 finding，**预计消 8 条真问题 finding**（F1 已由 v1.5.1 改触发词；F2/F3/F4/F13/F15 砍飞书；F6/F7 改 probe 交互；F5/F10/F11/F12 改文档/代码）。剩余 3 条（F8/F9/F14）是设计层面，无法消除。
+本版本集中响应 ClawHub 安全审计 15 条 finding，**预计消 13 条真问题 finding**（F1 已由 v1.5.1 改触发词；F2/F3/F4/F13/F15 砍飞书；F6/F7 改 probe 交互；F8/F9 改按需 + 删 localStorage；F5/F10/F11/F12 改文档/代码）。剩余 2 条（F14）是设计层面，无法消除。
+
+### Changed (后续 hotfix)
+- 📝 **description 改双职责**（继鹏指出 F5 描述不准）。原 "套餐监控中心" 含糊，实测 "套餐监控 + 速率测试" 双职责。SKILL.md frontmatter + 副标题 + README 都改诚实版。
 
 ### Removed
 - 🗑️ **砍掉飞书推送功能**（F2 / F3 / F4 / F13 / F15）。`mmx_quota_feishu.py` 脚本删除（142 行），SKILL.md / README.md / README_zh.md 中所有飞书段落清理，`.env.example` 中 `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_CHAT_ID` 三个变量移除。
