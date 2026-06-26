@@ -60,7 +60,6 @@ Real-time dashboard for monitoring MiniMax API package usage — quota tracking,
 - 📈 **API Rate Probe** — TTFT, P50, latency, token speed measurements
 - 📅 **Weekly Quota Tracking** — For models with weekly limits
 - 📜 **24h Usage History** (v1.5.0) — Trend lines from local `history.jsonl` ring buffer
-- 🔔 **Feishu Notification (optional)** — Push to Feishu group after query
 
 ---
 
@@ -69,7 +68,6 @@ Real-time dashboard for monitoring MiniMax API package usage — quota tracking,
 ### Prerequisites
 
 - Node.js ≥ 18 (runs backend service)
-- Python 3 (optional, for Feishu push)
 
 ### Install
 
@@ -105,12 +103,10 @@ After the page loads, click the **Query** button above the input box (API Key au
 1. **Read local credentials** — Loads `api_key` from `~/.mmx/config.json` (MiniMax Token Plan key).
 2. **Poll MiniMax API every 60s** — Calls `https://www.minimaxi.com/v1/token_plan/remains` for quota data.
 3. **Probe inference performance every 60s** (default ON) — Sends real streaming + concurrent requests to `api.minimaxi.com/v1/text/chatcompletion_v2`. Counts toward token billing.
-4. **Optional Feishu push** — Only when `mmx_quota_feishu.py` is run manually. Default OFF.
 
 **This service will NOT**:
 
 - Upload your API key to any remote.
-- Send the API key to Feishu. Only **quota query results** (percentages) are pushed.
 - Allow cross-origin web pages to reach the local server (CORS allowlist limits to `127.0.0.1 / localhost / file://`).
 
 ### Startup options
@@ -137,22 +133,20 @@ By default, the API key is **NOT** auto-loaded from `localStorage`. To skip re-t
 
 ## Configuration
 
-### Environment Variables (Feishu push, optional)
+### mmx Local Config (auto-read, recommended)
+
+Backend auto-reads API Key from `~/.mmx/config.json` — no manual config needed.
+
+### Environment Variable (fallback)
+
+If `~/.mmx/config.json` is not present, set this in `.env`:
 
 ```bash
 # Copy template
 cp .env.example .env
 
-# Fill in the following
 MINIMAX_API_KEY=sk-cp-…here           # MiniMax API Key (Token Plan type)
-FEISHU_APP_ID=your-app-id             # Feishu App ID
-FEISHU_APP_SECRET=your-app-secret     # Feishu App Secret
-FEISHU_CHAT_ID=your-chat-id           # Feishu Group ID
 ```
-
-### mmx Local Config (auto-read)
-
-Backend auto-reads API Key from `~/.mmx/config.json` — no manual config needed.
 
 ---
 
@@ -162,7 +156,6 @@ Backend auto-reads API Key from `~/.mmx/config.json` — no manual config needed
 |------|-------------|
 | `mmx-monitor.html` | Monitoring page (pure frontend, single HTML file) |
 | `mmx-monitor-server.js` | Local proxy service (Node.js, port 9877) |
-| `mmx_quota_feishu.py` | Feishu push script (optional) |
 | `history.jsonl` | 24h usage history (v1.5.0+, auto-generated) |
 | `CHANGELOG.md` | Full changelog with cross-version links |
 | `demo.png` | Screenshot |
@@ -187,20 +180,6 @@ Backend provides the following REST endpoints:
 
 ---
 
-## Feishu Push (Optional)
-
-### Method 1: Command Line
-
-```bash
-python3 mmx_quota_feishu.py <api_key>
-```
-
-### Method 2: Cron Job
-
-Set up a cron job to push regularly, combined with `.env` Feishu config.
-
----
-
 ## FAQ
 
 **Q: Shows "Connection Failed" after clicking Query?**
@@ -208,9 +187,6 @@ A: Make sure the backend service is running (`node mmx-monitor-server.js`). Fron
 
 **Q: Port 9877 already in use?**
 A: Stop the process using that port, or modify the `PORT` constant in `mmx-monitor-server.js`.
-
-**Q: Feishu push fails?**
-A: Confirm `FEISHU_APP_ID`, `FEISHU_APP_SECRET`, `FEISHU_CHAT_ID` are all filled in `.env`, and the Feishu bot has been added to the target group.
 
 ---
 

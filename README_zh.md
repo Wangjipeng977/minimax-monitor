@@ -60,7 +60,6 @@
 - 📈 **API 速率探针** — TTFT、P50、Token 速度实测
 - 📅 **本周配额追踪** — 有周限的模型显示本周已用/总额
 - 📜 **24 小时用量历史**（v1.5.0）— 本地 `history.jsonl` 环形 buffer，前端可画趋势线
-- 🔔 **飞书推送（可选）** — 查询后推送到飞书群
 
 ---
 
@@ -69,7 +68,6 @@
 ### 前置要求
 
 - Node.js ≥ 18（运行后端服务）
-- Python 3（飞书推送可选）
 
 ### 安装
 
@@ -105,12 +103,10 @@ open mmx-monitor.html
 1. **读取本地凭证**：从 `~/.mmx/config.json` 读取 `api_key`（MiniMax Token Plan key）
 2. **每 60s 调 MiniMax API**：调 `https://www.minimaxi.com/v1/token_plan/remains` 拿配额数据
 3. **每 60s 主动探测 MiniMax 推理性能**（默认开启）：发真实 streaming + 并发请求到 `api.minimaxi.com/v1/text/chatcompletion_v2`，计入会产生 token 费用
-4. **可选推送到飞书**（需手动运行 `mmx_quota_feishu.py`，默认不开启）
 
 **本服务不会**：
 
 - 不会把 API key 上传到任何远程
-- 不会把 MiniMax API key 推到 Feishu；推送的是**配额查询结果**（百分比数字）
 - 不会允许跨源网页调用本机 server（CORS allowlist 限定 `127.0.0.1 / localhost / file://`）
 
 ### 启动选项
@@ -137,22 +133,20 @@ v1.4.0 起，**默认不会**从 localStorage 自动加载 API Key。如果想 2
 
 ## 配置文件
 
-### 环境变量（飞书推送，可选）
+### mmx 本地配置（自动读取，推荐）
+
+后端服务会自动读取 `~/.mmx/config.json` 中的 API Key，无需手动配置。
+
+### 环境变量（备选）
+
+如果 `~/.mmx/config.json` 不存在，在 `.env` 中设置：
 
 ```bash
 # 复制模板
 cp .env.example .env
 
-# 填写以下变量
 MINIMAX_API_KEY=sk-cp-…here      # MiniMax API Key（Token Plan 类型）
-FEISHU_APP_ID=your-app-id                 # 飞书应用 App ID
-FEISHU_APP_SECRET=***        # 飞书应用 App Secret
-FEISHU_CHAT_ID=your-chat-id               # 飞书群 ID
 ```
-
-### mmx 本地配置（自动读取）
-
-后端服务会自动读取 `~/.mmx/config.json` 中的 API Key，无需手动配置。
 
 ---
 
@@ -162,7 +156,6 @@ FEISHU_CHAT_ID=your-chat-id               # 飞书群 ID
 |------|------|
 | `mmx-monitor.html` | 监控页面（纯前端，单文件 HTML） |
 | `mmx-monitor-server.js` | 本地代理服务（Node.js，端口 9877） |
-| `mmx_quota_feishu.py` | 飞书推送脚本（可选） |
 | `history.jsonl` | 24h 用量历史（v1.5.0+，自动生成） |
 | `CHANGELOG.md` | 完整更新日志（带版本对比链接） |
 | `demo.png` | 监控页面截图 |
@@ -187,20 +180,6 @@ FEISHU_CHAT_ID=your-chat-id               # 飞书群 ID
 
 ---
 
-## 飞书推送（可选）
-
-### 方式一：命令行推送
-
-```bash
-python3 mmx_quota_feishu.py <api_key>
-```
-
-### 方式二：配合定时任务
-
-设置 cron 定时推送，结合 `.env` 中的飞书配置。
-
----
-
 ## 常见问题
 
 **Q: 点查询后显示"连接失败"？**
@@ -208,9 +187,6 @@ A: 请确认后端服务已启动（`node mmx-monitor-server.js`）。服务未�
 
 **Q: 端口 9877 被占用？**
 A: 停止占用该端口的进程，或修改 `mmx-monitor-server.js` 中的 `PORT` 常量。
-
-**Q: 飞书推送失败？**
-A: 确认 `.env` 中 `FEISHU_APP_ID`、`FEISHU_APP_SECRET`、`FEISHU_CHAT_ID` 均已填写，且飞书机器人已加入目标群。
 
 ---
 

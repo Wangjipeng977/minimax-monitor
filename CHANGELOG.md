@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-06-26
+
+### Removed
+- 🗑️ **砍掉飞书推送功能**（ClawHub 安全审计 F3 / F4 / F13 / F15）。`mmx_quota_feishu.py` 脚本删除（142 行），SKILL.md / README.md / README_zh.md 中所有飞书段落清理，`.env.example` 中 `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_CHAT_ID` 三个变量移除。
+- **原因**：飞书 OAuth 协议要求脚本把 `FEISHU_APP_SECRET` 通过 POST 发到 `open.feishu.cn` —— 审计器把它识别为 "Credential Exfiltration Chain"（F3, F13），置信度 83-90%。这是协议本身要求，无法通过文档警示消除。砍掉 = 永久消除 4 条 finding。
+- **影响**：WebChat / 网页仪表盘不受影响。F4 finding（"脚本自动推送无确认"）由 v1.5.1 改成手动运行也已在 v1.6.0 一并删除。
+- **替代方案**：以后如需飞书推送，建议拆成独立 skill（如 `mmx-quota-feishu`），调用本技能的 `GET /api/token_plan` 端点，避免单技能同时承担"配额查询 + 第三方推送"双职责。
+
+### Notes
+- v1.5.1 触发词收敛改动 `mmx 仪表盘启动` 保留。
+- v1.5.1 的 "飞书不再走对话触发" 在 v1.6.0 一并删除（飞书功能整体移除）。
+
+## [1.5.1] - 2026-06-26
+
+### Changed
+- 🔒 **触发词收敛**（F1/F2）。从 4 个泛词（"查配额" / "打开 minimax 监控" / "minimax 监控" / "minimax 仪表盘"）收敛为单一触发词 `mmx 仪表盘启动`，减少普通聊天误触本地服务的概率。
+- 🛑 **飞书推送不再走对话触发**（响应 F4）。"查配额" 这条飞书路径删除，改为手动运行 `mmx_quota_feishu.py`。
+
 ## [1.5.0] - 2026-06-25
 
 ### ✨ Features
