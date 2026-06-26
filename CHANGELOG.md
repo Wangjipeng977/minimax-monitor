@@ -9,15 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2026-06-26
 
+### Security Hardening
+本版本集中响应 ClawHub 安全审计 15 条 finding，**预计消 8 条真问题 finding**（F1 已由 v1.5.1 改触发词；F2/F3/F4/F13/F15 砍飞书；F6/F7 改 probe 交互；F5/F10/F11/F12 改文档/代码）。剩余 3 条（F8/F9/F14）是设计层面，无法消除。
+
 ### Removed
-- 🗑️ **砍掉飞书推送功能**（ClawHub 安全审计 F3 / F4 / F13 / F15）。`mmx_quota_feishu.py` 脚本删除（142 行），SKILL.md / README.md / README_zh.md 中所有飞书段落清理，`.env.example` 中 `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_CHAT_ID` 三个变量移除。
-- **原因**：飞书 OAuth 协议要求脚本把 `FEISHU_APP_SECRET` 通过 POST 发到 `open.feishu.cn` —— 审计器把它识别为 "Credential Exfiltration Chain"（F3, F13），置信度 83-90%。这是协议本身要求，无法通过文档警示消除。砍掉 = 永久消除 4 条 finding。
-- **影响**：WebChat / 网页仪表盘不受影响。F4 finding（"脚本自动推送无确认"）由 v1.5.1 改成手动运行也已在 v1.6.0 一并删除。
+- 🗑️ **砍掉飞书推送功能**（F2 / F3 / F4 / F13 / F15）。`mmx_quota_feishu.py` 脚本删除（142 行），SKILL.md / README.md / README_zh.md 中所有飞书段落清理，`.env.example` 中 `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_CHAT_ID` 三个变量移除。
+- **原因**：飞书 OAuth 协议要求脚本把 `FEISHU_APP_SECRET` 通过 POST 发到 `open.feishu.cn` —— 审计器把它识别为 "Credential Exfiltration Chain"（F3, F13），置信度 83-90%。这是协议本身要求，无法通过文档警示消除。砍掉 = 永久消除 5 条 finding。
 - **替代方案**：以后如需飞书推送，建议拆成独立 skill（如 `mmx-quota-feishu`），调用本技能的 `GET /api/token_plan` 端点，避免单技能同时承担"配额查询 + 第三方推送"双职责。
+
+### Changed
+- 🔒 **速率测试改按需触发**（F6 / F7 永久消除）。
+  - **问题**：v1.4.0 / v1.5.0 每 60s 自动发 5 次 chat completion 请求（×~180 token），24h = ~7200 次 / ~720K token 上限。审计器认这个为 "active billable probes going beyond passive viewing"，F6 88% / F7 96% 置信度。
+  - **新设计**：
+    1. 仪表盘速率面板顶部加红字提示 + "▶ 开始速率测试" 按钮
+    2. 点击后 JS 弹 `window.confirm()`：「即将发起 5 次 chat 请求（×~180 token 上限），计入套餐配额。确认继续吗？」
+    3. 用户取消 → 不发；用户确认 → 调 `/api/probe`
+    4. Server 端 `/api/probe` 加 Referer 校验（不在本机白名单 → 403）
+    5. 响应里带回 `cost_estimate` 字段供前端展示
+  - **节省**：未点击时零额外消耗；点击一次 ~180 token 上限，用户说了算。
+  - **代码改动**：
+    - server.js: 删 `FLAGS.probeEnabled`、`--no-probe` CLI flag、`/api/probe` 中的 `if (!FLAGS.probeEnabled) 403` 分支；加 Referer 校验 + `cost_estimate` 响应字段。
+    - mmx-monitor.html: 删 `startMon()` 里的自动 `doSpeedTest()` 调用；删 `tick()` 里的 `timers.speed` 逻辑；删 visibilitychange 监听里的 probe 调用；给 "▶ 开始速率测试" 按钮绑 click 事件 + confirm。
+    - 状态栏"速率测试"项：原来显示倒计时 `--:--` → 改为静态 "点击右侧"，避免误导用户以为后台在跑。
+- 🔧 **`permissions:` 声明**（F11 永久消除）。SKILL.md frontmatter 加 YAML 块，明示 4 项权限：
+  - `read:filesystem`（读 `~/.mmx/config.json`）
+  - `read:env`（读 `MINIMAX_API_KEY`）
+  - `network:outbound`（api.minimaxi.com / www.minimaxi.com）
+  - `shell:exec`（`open` 命令启动浏览器）
+- 🔧 **首段 description 改诚实版**（F5 severity 降）。原 "实时监控 + 速率探针" → 改 "配额监控 + 24h 历史 + 按需速率测试"，如实反映技能边界。
+- 🔧 **localStorage 勾选加 ⚠️ tooltip**（F12 永久消除）。`记住 24 小时` 标签后加 ⚠️ 图标 + `title` 属性说明"本机 XSS / 恶意扩展 / 共享电脑可读取 key"。
+- 🔧 **修 F10 注释/代码不一致**（F10 永久消除）。原注释 "默认不自动加载 localStorage 里的 key" 与代码 "启动时检查并恢复" 矛盾。改注释为准确描述"启动不自动加载；若用户以前勾过记住 24h 且未过期，走原恢复逻辑"。
 
 ### Notes
 - v1.5.1 触发词收敛改动 `mmx 仪表盘启动` 保留。
 - v1.5.1 的 "飞书不再走对话触发" 在 v1.6.0 一并删除（飞书功能整体移除）。
+- v1.5.0 history.jsonl 24h 滚动 buffer + `/api/history` 端点不受影响。
+- v1.4.0 CORS allowlist / `--allow-header-key` 保留。
 
 ## [1.5.1] - 2026-06-26
 

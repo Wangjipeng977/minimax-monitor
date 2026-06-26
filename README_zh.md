@@ -102,21 +102,19 @@ open mmx-monitor.html
 
 1. **读取本地凭证**：从 `~/.mmx/config.json` 读取 `api_key`（MiniMax Token Plan key）
 2. **每 60s 调 MiniMax API**：调 `https://www.minimaxi.com/v1/token_plan/remains` 拿配额数据
-3. **每 60s 主动探测 MiniMax 推理性能**（默认开启）：发真实 streaming + 并发请求到 `api.minimaxi.com/v1/text/chatcompletion_v2`，计入会产生 token 费用
+3. **速率测试需用户主动触发**（v1.6.0+）：仪表盘速率面板不再自动调用 chat completion。点 "开始速率测试" 按钮才会发起 5 次真实 chat 请求（×~180 token 上限），UI 红字提示 + 二次确认。
 
 **本服务不会**：
 
 - 不会把 API key 上传到任何远程
 - 不会允许跨源网页调用本机 server（CORS allowlist 限定 `127.0.0.1 / localhost / file://`）
+- 不会在后台悄悄消耗你的 chat 配额（v1.6.0 起 probe 改按需触发）
 
 ### 启动选项
 
 ```bash
 # 默认配置（推荐）
 node mmx-monitor-server.js
-
-# 关闭主动探测（节省配额）
-node mmx-monitor-server.js --no-probe
 
 # 启用 header API key 透传（高级用户，自负责）
 node mmx-monitor-server.js --allow-header-key
@@ -172,7 +170,7 @@ MINIMAX_API_KEY=sk-cp-…here      # MiniMax API Key（Token Plan 类型）
 | 接口 | 说明 |
 |------|------|
 | `GET /api/token_plan` | 从 MiniMax 官方获取配额（推荐） |
-| `GET /api/probe` | 实时 API 延迟探针（`--no-probe` 时返回 403） |
+| `GET /api/probe` | 按需 API 延迟探针（v1.6.0+ 用户点击按钮，弹 confirm 二次确认） |
 | `GET /api/history?hours=24` | 24h 用量历史（v1.5.0） |
 | `GET /health` | 健康检查 |
 

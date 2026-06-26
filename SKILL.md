@@ -2,6 +2,11 @@
 name: minimax-monitor
 description: MiniMax 套餐监控中心。触发词：mmx 仪表盘启动。
 version: 1.6.0
+permissions:
+  - read:filesystem       # ~/.mmx/config.json
+  - read:env               # MINIMAX_API_KEY
+  - network:outbound       # api.minimaxi.com / www.minimaxi.com
+  - shell:exec             # 'open' 命令启动浏览器
 ---
 
 # MiniMax 套餐监控中心
@@ -57,14 +62,14 @@ version: 1.6.0
 
 1. **读取本地凭证**：从 `~/.mmx/config.json` 读取 `api_key`（MiniMax Token Plan key）。
 2. **定时调用 MiniMax API**：每 60s 调 `https://www.minimaxi.com/v1/token_plan/remains` 拿配额数据。
-3. **主动探测 MiniMax 推理性能**（v1.4.0 默认开启）：每 60s 发真实 streaming / concurrent 请求到 `api.minimaxi.com/v1/text/chatcompletion_v2`，计入会产生 token 费用。
+3. **速率测试需用户主动触发**：v1.6.0 起，仪表盘速率面板**不再自动**调用 chat completion。点 "开始速率测试" 按钮才会发起 5 次真实 chat 请求（约 180 token 上限），UI 会有红字提示 + 二次确认。
 
 **不会做**：
 
 - 不会把 API key 上传到任何远程（仅本地使用）。
 - 不会允许跨源网页调用本机 server（CORS allowlist 限定 `127.0.0.1/localhost/file://`）。
+- 不会在后台悄悄消耗你的 chat 配额（v1.6.0 起 probe 改按需触发；不点不动）。
 
-**想关闭主动探测**（节省配额）：`node mmx-monitor-server.js --no-probe`
 **想使用 header 透传 key**（高级用户，需要自负责）：`node mmx-monitor-server.js --allow-header-key`
 
 ## 技能简介

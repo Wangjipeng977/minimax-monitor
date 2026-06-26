@@ -115,9 +115,6 @@ After the page loads, click the **Query** button above the input box (API Key au
 # Default config (recommended)
 node mmx-monitor-server.js
 
-# Disable active probing (save quota)
-node mmx-monitor-server.js --no-probe
-
 # Allow header API key passthrough (advanced, your responsibility)
 node mmx-monitor-server.js --allow-header-key
 ```
@@ -172,7 +169,7 @@ Backend provides the following REST endpoints:
 | Endpoint | Description |
 |----------|-------------|
 | `GET /api/token_plan` | Fetch quota from MiniMax official (recommended) |
-| `GET /api/probe` | Real-time API latency probe (`--no-probe` returns 403) |
+| `GET /api/probe` | On-demand API latency probe (v1.6.0+: user clicks button, confirm dialog) |
 | `GET /api/history?hours=24` | 24h usage history from local ring buffer (v1.5.0) |
 | `GET /health` | Health check |
 

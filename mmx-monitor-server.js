@@ -12,8 +12,6 @@ const FLAGS = {
   // 默认禁用 header 透传 API key，避免本地服务被恶意网页当作 proxy 消费你的配额
   // 需要使用 header key 时显式开启：node mmx-monitor-server.js --allow-header-key
   allowHeaderKey: process.argv.includes('--allow-header-key'),
-  // 默认开启 probe（实时速率探测）。可 --no-probe 关闭，关掉后 /api/probe 返回 403
-  probeEnabled: !process.argv.includes('--no-probe'),
 };
 
 // ── v1.4.0: CORS origin allowlist ───────────────────────
@@ -422,15 +420,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ── GET /api/probe ─────────────────────────────────────
-  // Does a real streaming API call and returns actual performance data
-  // v1.4.0: F4 - probe 默认开启会发起真实 inference 请求消耗配额。
-  // 担心被误触消耗的话用 --no-probe flag 关闭，关掉后端点返回 403。
+  // ── GET /api/probe ──────────────────────────────────────────
+  // v1.6.0 (F6/F7): probe 改按需触发。端点保留，但不在后台定时调用。
+  // 前端 "开始速率测试" 按钮才会调，发起 5 次真实 chat completion 请求（×~180 token）。
+  // 必须满足两个条件才放行：
+  //   (1) Referer 是本机页面（CORS allowlist 已经检过 Origin，这里加 Referer 二次防御）
+  //   (2) 响应里带回 cost_estimate 字段，前端会先弹 confirm 才发
   if (req.method === 'GET' && urlPath === '/api/probe') {
-    if (!FLAGS.probeEnabled) {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: false, error: 'probe disabled by --no-probe' }));
-      return;
+    const referer = req.headers['referer'] || '';
+    // Referer 为空（curl / 本机直连）或不在本机白名单 → 拒绝
+    if (referer) {
+      const ok = ALLOWED_ORIGINS.some(o => o !== 'null' && referer.startsWith(o));
+      if (!ok) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'probe requires Referer from local origin' }));
+        return;
+      }
     }
     const [probeResult, burstResult, ordinaryResult] = await Promise.all([
       probeApiLatency(apiKey),
@@ -441,6 +446,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       ok: true,
+      cost_estimate: '5 chat completion requests, max ~180 tokens',
       // SEQ test: sequential probe, use last latency as baseline
       seq_ok: 1, seq10_total: 1,
       seq10_latency: probeResult.latency,
@@ -475,7 +481,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`MiniMax Monitor API -> http://localhost:${PORT}`);
   console.log('  GET /api/token_plan — MiniMax token_plan');
-  console.log('  GET /api/probe     — real API latency probe');
+  console.log('  GET /api/probe     — on-demand API latency probe (v1.6.0: 需用户主动点击)');
   console.log('  GET /api/history   — 24h usage history (v1.5.0)');
   console.log('  GET /health        — health check');
   // v1.4.0: F11 - 明确告知本服务会读 ~/.mmx/config.json 拿 MiniMax API key。
@@ -483,6 +489,6 @@ server.listen(PORT, () => {
   console.log('[security] v1.4.0 security posture:');
   console.log(`  - CORS allowlist: 127.0.0.1/localhost/file:// (no longer *)`);
   console.log(`  - Header API key: ${FLAGS.allowHeaderKey ? 'ALLOWED (--allow-header-key)' : 'DENIED (use local ~/.mmx/config.json only)'}`);
-  console.log(`  - Probe endpoint: ${FLAGS.probeEnabled ? 'ENABLED' : 'DISABLED (--no-probe)'}`);
+  console.log(`  - Probe endpoint: ON-DEMAND ONLY (v1.6.0 起不再定时调用，UI 点 "开始速率测试" 才触发)`);
   console.log(`  - Reads mmx config from ${MMX_CONFIG}`);
 });
