@@ -185,7 +185,6 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
   <div class="right-panel">
     <div class="glass-card" id="rateCard" style="box-sizing:border-box">
       <div class="panel-header"><div class="live-dot"></div> 速率监控</div>
-      <div style="font-size:10px;color:rgba(255,200,80,0.85);background:rgba(255,150,0,0.12);border:1px solid rgba(255,150,0,0.3);border-radius:5px;padding:6px 8px;margin-bottom:8px;line-height:1.5">⚠️ 速率测试需主动点击。<br>测试会发起 5 次 chat completion 请求（×~180 token 上限），计入套餐配额。</div>
       <button id="btnProbe" style="width:100%;background:linear-gradient(135deg,#0097a7,#00b8d4);color:#fff;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:10px;transition:all .2s" onmouseover="this.style.background='linear-gradient(135deg,#00838f,#00a4bf)'" onmouseout="this.style.background='linear-gradient(135deg,#0097a7,#00b8d4)'">▶ 开始速率测试</button>
       <div class="rate-group"><div class="rate-group-title">SEQ-10 顺序测试</div>
         <div class="rate-row"><span class="rate-lbl">成功/总计</span><span class="rate-val green" id="seqOk">--/--</span></div>
