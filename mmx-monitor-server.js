@@ -352,7 +352,7 @@ const server = http.createServer(async (req, res) => {
   const allowOrigin = corsOriginFor(req);
   if (allowOrigin) {
     res.setHeader('Access-Control-Allow-Origin', allowOrigin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     // F3: 只在 allowHeaderKey 开启时才暴露 X-MMX-API-Key header
     res.setHeader('Access-Control-Allow-Headers', FLAGS.allowHeaderKey ? 'Content-Type, X-MMX-API-Key' : 'Content-Type');
     res.setHeader('Vary', 'Origin');
