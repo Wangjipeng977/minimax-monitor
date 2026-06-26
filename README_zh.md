@@ -12,6 +12,18 @@
 
 ---
 
+## v1.6.0 新增
+
+- 🔒 **安全加固大版本** — 集中响应 ClawHub 审计 15 条 finding，**预计消 13 条**（仅 2 条设计层面无法消除）。
+  - **速率测试改按需** — `/api/probe` 不再后台自动调。用户点 "▶ 开始速率测试" 按钮 → `confirm()` 二次确认 → 才发起 5 次 chat completion 请求。
+  - **凭证改按需加载** — Server 启动不再自动读 `~/.mmx/config.json`。点 "加载本地凭证" 按钮 → `confirm()` → `POST /api/load_cred` → 凭证存入 server 进程内存。未加载时返 401。
+  - **删 localStorage 24h 记忆** — 重启后必须重新输入 Key 或重新点按钮加载。
+  - **砍飞书推送** — 删 `mmx_quota_feishu.py`（142 行）。飞书 OAuth 协议要求发 `FEISHU_APP_SECRET`，无法通过文档警示消除。
+  - **`permissions:` 声明**（SKILL.md frontmatter 消 F11）— 显式列出读 env / 联网 / 读 config / shell 权限。
+- 📝 **description 改诚实版**（消 F5）— 原 "套餐监控中心" 含糊，改 "MiniMax 套餐监控 + 速率测试中心"。
+- 🛠️ **Server 服务 HTML** — 浏览器访问 `http://127.0.0.1:9877/` 直接打开（绕开 Safari file:// fetch bug）。
+- 🎨 **UI 优化** — 速率按钮红字提示删除（弹窗已说明），latency-item 加 min-height 防进度条与文字重叠。
+
 ## v1.5.0 新增
 
 - 🆕 **24 小时用量历史端点**（`GET /api/history`）—— 每次配额查询自动写入 `history.jsonl` 环形 buffer，保留 24h
@@ -20,6 +32,17 @@
 - 🔒 v1.4.0 已落地的 CORS 严格化、header key 默认拒绝、localStorage 默认不加载 —— 详见 [安全与数据流](#安全与数据流)
 
 ## 更新日志
+
+### v1.6.0（2026-06-26）
+- 🔒 **速率测试改按需**（F6/F7）— `/api/probe` 不再后台自动调。用户点按钮 + `confirm()` 二次确认后才跑 5 次 chat completion。
+- 🔒 **凭证按需加载**（F8）— Server 启动不再读 `~/.mmx/config.json`。点 "加载本地凭证" 按钮 + `confirm()` → `POST /api/load_cred`。未加载时返 401。
+- 🗑️ **砍飞书推送**（F2/F3/F4/F13/F15）— 删 `mmx_quota_feishu.py`。飞书 OAuth 协议要求发 secret，文档警示无法消除。
+- 🗑️ **删 localStorage**（F9/F12）— 24h 浏览器记忆移除。重启需重新输入或重新加载。
+- 🔧 **`permissions:` 块**（F11）— SKILL.md frontmatter 显式声明 4 项能力。
+- 🔧 **description 改诚实版**（F5）— "套餐监控 + 速率测试中心"，匹配实际功能。
+- 🔧 **Server 服务 HTML** — `GET /` 返回 `mmx-monitor.html`，绕开 Safari file:// fetch bug。
+- 🔧 **速率面板布局** — `.latency-item` 加 min-height 18px 防进度条与文字重叠。
+- 🛠️ **XHR 兑底** — `load_cred` 用 XMLHttpRequest 代替 fetch（Safari 兼容性）。
 
 ### v1.5.0（2026-06-25）
 - 🆕 **`/api/history` 端点**：server 每次 `fetchQuota` 时把 `(timestamp, usedPct, modelSnapshot)` 追加到 `history.jsonl`，保留最近 24h；通过 `GET /api/history?hours=24` 暴露给前端画趋势线

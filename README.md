@@ -12,6 +12,18 @@ Real-time dashboard for monitoring MiniMax API package usage — quota tracking,
 
 ---
 
+## What's New in v1.6.0
+
+- 🔒 **Major security hardening** — Resolved all 13 actionable ClawHub audit findings; only 2 design-level findings remain.
+  - **Probe on-demand** — `/api/probe` no longer auto-fires. User clicks "▶ Start Speed Test" button → `confirm()` dialog → 5 chat completion requests.
+  - **Credential on-demand** — Server no longer auto-reads `~/.mmx/config.json`. Click "加载本地凭证" button → `confirm()` → `POST /api/load_cred` → key in server process memory.
+  - **localStorage removed** — No more 24h browser persistence. Restart = re-enter key.
+  - **Feishu push removed** — `mmx_quota_feishu.py` deleted (142 lines). Protocol-level secret exfiltration cannot be safely documented.
+  - **permissions: block** added to SKILL.md frontmatter (MCP least-privilege finding).
+- 📝 **Description now honestly says "quota + rate"** — Was just "套餐监控中心", now "MiniMax 套餐监控 + 速率测试中心" matching actual behavior.
+- 🛠️ **Server now serves HTML** — Browse `http://127.0.0.1:9877/` directly (Safari file:// fetch bug fix).
+- 🎨 **UI cleanup** — Removed redundant speed-test warning text (confirm dialog covers it), added 18px row height for latency bars to prevent text overlap.
+
 ## What's New in v1.5.0
 
 - 🆕 **24h usage history endpoint** (`GET /api/history`) — see how your quota usage trends over the day, persisted in a local ring buffer
@@ -20,6 +32,17 @@ Real-time dashboard for monitoring MiniMax API package usage — quota tracking,
 - 🔒 Hardened CORS, header key policy, and localStorage handling landed in v1.4.0 — see [Security & Data Flow](#security--data-flow)
 
 ## Changelog
+
+### v1.6.0 (2026-06-26)
+- 🔒 **Probe on-demand** (F6/F7) — `/api/probe` no longer auto-fires. User clicks button + `confirm()` dialog before 5 chat completion requests run.
+- 🔒 **Credential on-demand** (F8) — Server no longer auto-reads `~/.mmx/config.json` on startup. User clicks "加载本地凭证" button + `confirm()` to load via `POST /api/load_cred`. Returns 401 until loaded.
+- 🗑️ **Feishu push removed** (F2/F3/F4/F13/F15) — `mmx_quota_feishu.py` deleted. Feishu OAuth requires sending `FEISHU_APP_SECRET` over network, which audit cannot safely document.
+- 🗑️ **localStorage removed** (F9/F12) — No more 24h browser persistence. Restart requires manual key entry or button load.
+- 🔧 **`permissions:` block** in SKILL.md frontmatter (F11) — Declares filesystem / env / network / shell capabilities explicitly.
+- 🔧 **Description changed** (F5) — Now says "套餐监控 + 速率测试" matching actual behavior.
+- 🔧 **Server serves HTML** — `GET /` returns `mmx-monitor.html`. Fixes Safari file:// fetch bug.
+- 🔧 **Latency bar layout** — Added `min-height: 18px` to `.latency-item` to prevent bar/text overlap.
+- 🛠️ **XHR fallback for load_cred** — XMLHttpRequest used instead of `fetch` for Safari compatibility.
 
 ### v1.5.0 (2026-06-25)
 - 🆕 **`/api/history` endpoint** — Server appends a `(timestamp, usedPct, modelSnapshot)` row to `history.jsonl` on every quota fetch, retains last 24h, exposes via `GET /api/history?hours=24`. Frontend can plot trend lines without making its own requests.
