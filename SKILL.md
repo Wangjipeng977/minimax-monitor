@@ -54,7 +54,7 @@ permissions:
 # MiniMax 套餐监控中心
 
 > **触发词**：mmx 仪表盘启动
-> 启动后 **自动用 `open` 命令打开 HTML 页面**（macOS 直接唤起浏览器），无需手动拖入。
+> 启动后 **自动用 `open` 命令打开 `http://127.0.0.1:9877/`**（v1.6.0+ 同源访问，避免 file:// 协议 Safari fetch 报错）。
 
 ## Security & Data Flow（v1.4.0）
 
@@ -99,7 +99,7 @@ MiniMax API 套餐使用情况实时监控，单一通道：**网页仪表盘**�
    ```bash
    node ~/.openclaw/workspace/skills/minimax-monitor/mmx-monitor-server.js
    ```
-2. 我会自动执行 `open` 命令打开 `mmx-monitor.html`，浏览器自动加载
+2. 浏览器访问 `http://127.0.0.1:9877/`（同源 fetch，无 CORS 问题；也避免 Safari file:// fetch 报错）
 
 ## 环境变量
 

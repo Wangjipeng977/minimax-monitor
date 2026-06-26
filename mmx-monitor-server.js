@@ -509,6 +509,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── GET / 或 /mmx-monitor.html ──────────────────────────────
+  // v1.6.0 (Safari file:// 兼容性)：让 server 也服务 HTML，
+  // 浏览器通过 http://127.0.0.1:9877/ 打开，同源 fetch 避免 file:// → http CORS 问题。
+  if (urlPath === '/' || urlPath === '/mmx-monitor.html' || urlPath === '/index.html') {
+    try {
+      const html = fs.readFileSync(path.join(__dirname, 'mmx-monitor.html'), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
+      return;
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Failed to read mmx-monitor.html: ' + e.message);
+      return;
+    }
+  }
+
   // ── GET /health ────────────────────────────────────────
   if (urlPath === '/health') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
