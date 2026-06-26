@@ -226,7 +226,28 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
   function startMon(){if(tickId)clearInterval(tickId);tickId=setInterval(tick,1000);fetchQuota();}
   function showError(msg){var el=document.getElementById('errorBanner');document.getElementById('errorMsg').textContent=msg;el.style.display='block';}
   function tick(){for(var k in timers)if(k!=='reset')timers[k]=Math.max(0,timers[k]-1);document.getElementById('stripRefresh').textContent=fmt(timers.refresh);document.getElementById('stripReset').textContent=timers.reset>0?'剩余 '+fmt(timers.reset):'已重置';if(timers.refresh<=0){timers.refresh=REFRESH_INT;fetchQuota();}}
-  function fetchQuota(){var h={};if(apiKey)h['X-MMX-API-Key']=apiKey;document.getElementById('errorBanner').style.display='none';fetch(API_BASE+'/api/token_plan',{headers:h}).then(function(r){if(!r.ok)throw new Error('HTTP'+r.status);return r.json();}).then(function(result){if(result.ok&&result.data){renderQuota(result.data);}else{console.warn('token_plan failed:',result.error||result.message);showError('配额接口异常：'+(result.error||result.message||'未知错误'));}}).catch(function(e){console.warn('quota failed:',e.message);showError('后端服务未启动，请先运行：node mmx-monitor-server.js');});}
+  function fetchQuota(){
+    var h={};if(apiKey)h['X-MMX-API-Key']=apiKey;
+    document.getElementById('errorBanner').style.display='none';
+    fetch(API_BASE+'/api/token_plan',{headers:h}).then(function(r){
+      // v1.6.0: 区分 401 / 网络错误 / 其他。401 = key 未加载，不是服务未启动。
+      if(r.status===401)throw new Error('KEY_REQUIRED');
+      if(!r.ok)throw new Error('HTTP'+r.status);
+      return r.json();
+    }).then(function(result){
+      if(result.ok&&result.data){renderQuota(result.data);}
+      else{console.warn('token_plan failed:',result.error||result.message);showError('配额接口异常：'+(result.error||result.message||'未知错误'));}
+    }).catch(function(e){
+      console.warn('quota failed:',e.message);
+      if(e.message==='KEY_REQUIRED'){
+        showError('请点顶部 “加载本地凭证” 按钮或手动输入 API Key');
+      }else if(e.message&&e.message.indexOf('HTTP')===0){
+        showError('配额接口异常：'+e.message);
+      }else{
+        showError('后端服务未启动，请先运行：node mmx-monitor-server.js');
+      }
+    });
+  }
   function doSpeedTest(){
     // v1.6.0: 调 /api/probe 之前先弹 confirm 二次确认。说明会发请求、消耗配额、用户可取消。
     if(!window.confirm('即将发起 5 次 MiniMax chat completion 请求（×~180 token 上限），计入套餐配额。\n\n确认继续吗？'))return;
@@ -284,15 +305,31 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
     document.getElementById('btnLoadCred').onclick=function(){
       if(!window.confirm('将读取本地 ~/.mmx/config.json 拿 MiniMax API key，并存入本次会话内存（不写浏览器、不写文件）。\n\n确认继续吗？'))return;
       var btn=this;btn.disabled=true;btn.textContent='⏳ 加载中...';
-      fetch(API_BASE+'/api/load_cred').then(function(r){return r.json();}).then(function(d){
-        if(d&&d.ok&&d.key){
-          apiKey=d.key;
-          document.getElementById('apiKeyInput').value=d.key;
-          btn.textContent='✅ 已加载';
-        }else{
-          btn.textContent='❌ '+((d&&d.error)||'未找到 ~/.mmx/config.json');
+      // v1.6.0: 用 XHR 兑底（Safari WebKit fetch 某些场景下会报 'The string did not match the expected pattern'）
+      var xhr=new XMLHttpRequest();
+      xhr.open('POST', API_BASE+'/api/load_cred', true);
+      xhr.onload=function(){
+        try{
+          var d=JSON.parse(xhr.responseText);
+          if(xhr.status===200 && d.ok && d.key){
+            apiKey=d.key;
+            document.getElementById('apiKeyInput').value=d.key;
+            btn.textContent='✅ 已加载';
+          }else{
+            btn.textContent='❌ '+(d.error||('HTTP '+xhr.status));
+          }
+        }catch(e){
+          btn.textContent='❌ 解析失败';
+          console.error('[load_cred parse]',e,xhr.responseText);
         }
-      }).catch(function(e){btn.textContent='❌ '+e.message;}).finally(function(){setTimeout(function(){btn.disabled=false;btn.textContent='加载本地凭证';},3000);});
+        setTimeout(function(){btn.disabled=false;btn.textContent='加载本地凭证';},3000);
+      };
+      xhr.onerror=function(){
+        btn.textContent='❌ 网络错误';
+        console.error('[load_cred] XHR error',xhr.status,xhr.statusText);
+        setTimeout(function(){btn.disabled=false;btn.textContent='加载本地凭证';},3000);
+      };
+      xhr.send();
     };
     // v1.6.0: 启动时不读 config.json，不读 localStorage。直接 startMon。
     startMon();

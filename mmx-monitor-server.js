@@ -348,6 +348,8 @@ async function probeApiLatency(apiKey) {
 
 // ── Server ───────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
+  // v1.6.0 debug: log every request to debug Safari fetch issue
+  console.log(`[req] ${req.method} ${req.url}  Origin=${req.headers['origin']||'-'}  Referer=${(req.headers['referer']||'').slice(0,80)}`);
   // v1.4.0: F5 - CORS 严格化。只允许本机 / file:// 同源。
   const allowOrigin = corsOriginFor(req);
   if (allowOrigin) {
