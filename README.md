@@ -2,9 +2,9 @@
 
 [中文版](./README_zh.md)
 
-Real-time dashboard for monitoring MiniMax API package usage — quota tracking, rate probing, weekly usage monitoring, and 24h history.
+Real-time local dashboard for monitoring MiniMax API package usage — quota tracking, on-demand rate probing, weekly usage, and 24h history.
 
-> **Current Version: v1.6.0** | [Changelog](#changelog) | [Security](#security--data-flow)
+> **Current Version: v1.6.1** | [CHANGELOG](CHANGELOG.md) | [License](LICENSE)
 
 ![Dashboard](demo.png)
 
@@ -12,77 +12,26 @@ Real-time dashboard for monitoring MiniMax API package usage — quota tracking,
 
 ---
 
-## What's New in v1.6.0
+## Features (v1.6.1)
 
-- 🔒 **Major security hardening** — Resolved all 13 actionable ClawHub audit findings; only 2 design-level findings remain.
-  - **Probe on-demand** — `/api/probe` no longer auto-fires. User clicks "▶ Start Speed Test" button → `confirm()` dialog → 5 chat completion requests.
-  - **Credential on-demand** — Server no longer auto-reads `~/.mmx/config.json`. Click "加载本地凭证" button → `confirm()` → `POST /api/load_cred` → key in server process memory.
-  - **localStorage removed** — No more 24h browser persistence. Restart = re-enter key.
-  - **Feishu push removed** — `mmx_quota_feishu.py` deleted (142 lines). Protocol-level secret exfiltration cannot be safely documented.
-  - **permissions: block** added to SKILL.md frontmatter (MCP least-privilege finding).
-- 📝 **Description now honestly says "quota + rate"** — Was just "套餐监控中心", now "MiniMax 套餐监控 + 速率测试中心" matching actual behavior.
-- 🛠️ **Server now serves HTML** — Browse `http://127.0.0.1:9877/` directly (Safari file:// fetch bug fix).
-- 🎨 **UI cleanup** — Removed redundant speed-test warning text (confirm dialog covers it), added 18px row height for latency bars to prevent text overlap.
+### Quota Monitoring
 
-## What's New in v1.5.0
+- 📊 **4-hour / 24-hour / weekly** usage windows — primary ring chart shows the user's actual Token Plan cycle
+- 🎯 **Per-model cards** distinguish 4h-capped / 24h-capped / no-weekly-limit / plan-not-enabled (video) cases
+- 📈 **24-hour trend line** from local `history.jsonl` ring buffer
 
-- 🆕 **24h usage history endpoint** (`GET /api/history`) — see how your quota usage trends over the day, persisted in a local ring buffer
-- 🆕 **Responsive layout** — main panel auto-shrinks on small viewports (`calc(min(560px, 100vh - 150px))`)
-- 🆕 **Bilingual README** — `README.md` (English, this file) + `README_zh.md` (中文)
-- 🔒 Hardened CORS, header key policy, and localStorage handling landed in v1.4.0 — see [Security & Data Flow](#security--data-flow)
+### Rate Probing (on-demand)
 
-## Changelog
+- ⚡ **TTFT / P50 / burst / token·s** measurements from real chat completion requests
+- ⚠️ **Button-only with confirm() dialog** — costs ~180 tokens per click, never fires automatically
 
-### v1.6.0 (2026-06-26)
-- 🔒 **Probe on-demand** (F6/F7) — `/api/probe` no longer auto-fires. User clicks button + `confirm()` dialog before 5 chat completion requests run.
-- 🔒 **Credential on-demand** (F8) — Server no longer auto-reads `~/.mmx/config.json` on startup. User clicks "加载本地凭证" button + `confirm()` to load via `POST /api/load_cred`. Returns 401 until loaded.
-- 🗑️ **Feishu push removed** (F2/F3/F4/F13/F15) — `mmx_quota_feishu.py` deleted. Feishu OAuth requires sending `FEISHU_APP_SECRET` over network, which audit cannot safely document.
-- 🗑️ **localStorage removed** (F9/F12) — No more 24h browser persistence. Restart requires manual key entry or button load.
-- 🔧 **`permissions:` block** in SKILL.md frontmatter (F11) — Declares filesystem / env / network / shell capabilities explicitly.
-- 🔧 **Description changed** (F5) — Now says "套餐监控 + 速率测试" matching actual behavior.
-- 🔧 **Server serves HTML** — `GET /` returns `mmx-monitor.html`. Fixes Safari file:// fetch bug.
-- 🔧 **Latency bar layout** — Added `min-height: 18px` to `.latency-item` to prevent bar/text overlap.
-- 🛠️ **XHR fallback for load_cred** — XMLHttpRequest used instead of `fetch` for Safari compatibility.
+### Security
 
-### v1.5.0 (2026-06-25)
-- 🆕 **`/api/history` endpoint** — Server appends a `(timestamp, usedPct, modelSnapshot)` row to `history.jsonl` on every quota fetch, retains last 24h, exposes via `GET /api/history?hours=24`. Frontend can plot trend lines without making its own requests.
-- 🆕 **Responsive main panel height** — `min(560px, 100vh - 150px)`. Smaller laptop screens no longer force vertical scroll.
-- 🆕 **Bilingual docs** — this file + `README_zh.md` with cross-links.
-
-### v1.4.0 (2026-06-25)
-- 🔒 **CORS strict allowlist** — `Access-Control-Allow-Origin: *` replaced by `127.0.0.1 / localhost / file://` allowlist. Malicious web pages can no longer reach the local server.
-- 🔒 **Header API key denied by default** — Server ignores `X-MMX-API-Key` request header unless `--allow-header-key` flag is set. Prevents local server from being abused as a credentialed proxy.
-- 🔒 **localStorage key not auto-loaded** — API key is no longer automatically reused from `localStorage`. Opt-in "Remember 24h" toggle expires automatically.
-- 🔒 **`--no-probe` flag** — Disable `/api/probe` endpoint (returns 403) to avoid real inference calls and token costs.
-- 📄 **Security & Data Flow docs** — Listed in SKILL.md / README below.
-
-### v1.3.0 (2026-06-24)
-- 🆙 **"Plan not enabled" detection for Video** — Distinguish `current_interval_status=3` for video (plan disabled, calls rejected) from real "unlimited" (voice/music/image).
-- 🆙 **Plan comparison banner** — Hailuo Video card embeds a 3-tier upgrade panel (Plus ¥49 / Max ¥119 / Ultra ¥469) when status indicates plan not enabled.
-- 🆙 **"No weekly limit" recognition** — `current_weekly_status=3` models show "无周限" instead of misleading "0% / 100%".
-- 🐛 **Gauge dasharray fix** — Original code hardcoded `515` (= 2πr) for a half-circle path (πr ≈ 257.6). Switched to `pathLength="100"` for normalized dasharray.
-- 🐛 **SSE stream parse fix** — Burst probe switched to `data.trimStart().startsWith('data:')` (was failing on multi-line SSE).
-- 🔧 **Port 9876 → 9877** — Avoid collision with `minimax-embedding-adapter`.
-
-### v1.2.0 (2026-06-23)
-- 🆙 **Adapt to new official Token Plan format** — `/v1/token_plan/remains` no longer returns `*_usage_count` / `*_total_count`, only `*_remaining_percent`. Server derives `used` from `(100 - remaining)`, frontend contract unchanged.
-- 🆙 **Feishu card text sync** — All quota numbers now show "used X% / remain Y%" instead of "0/100" base.
-
-### v1.1.0 (2026-05-02)
-- 🆕 **Auto-refresh on tab switch** — Switching back to the browser tab triggers a quota + rate refresh automatically.
-
-### v1.0.0 (2026-04-26)
-- Initial release with quota dashboard + rate probe + Feishu notification.
-
----
-
-## Features
-
-- 📊 **Real-time Quota Dashboard** — 5-hour window usage ring chart + per-model details
-- ⏱️ **Reset Countdown** — Auto-calculates remaining time until window reset
-- 📈 **API Rate Probe** — TTFT, P50, latency, token speed measurements
-- 📅 **Weekly Quota Tracking** — For models with weekly limits
-- 📜 **24h Usage History** (v1.5.0) — Trend lines from local `history.jsonl` ring buffer
+- 🔒 **Credential loaded on demand** — Server does **not** auto-read `~/.mmx/config.json`. Dashboard's "加载本地凭证" button + `confirm()` triggers `POST /api/load_cred`, key stored in server process memory only
+- 🔒 **`/api/load_cred` response excludes the full key** — returns `keyLength` + `keyPrefix` (first 6 chars) only
+- 🔒 **`/api/load_cred` rejects empty `Referer`** — must come from a local-origin page (`127.0.0.1 / localhost / file://`)
+- 🔒 **CORS allowlist** — only `127.0.0.1 / localhost / file://` can reach the local server
+- 🔒 **No remote key transmission** — API key never leaves the local machine
 
 ---
 
@@ -90,16 +39,7 @@ Real-time dashboard for monitoring MiniMax API package usage — quota tracking,
 
 ### Prerequisites
 
-- Node.js ≥ 18 (runs backend service)
-
-### Install
-
-```bash
-# Clone or download, then cd into the project
-cd minimax-monitor
-
-# No npm install needed — pure Node.js standard library, zero deps
-```
+- Node.js ≥ 18
 
 ### Run
 
@@ -107,63 +47,41 @@ cd minimax-monitor
 # 1. Start backend service
 node mmx-monitor-server.js
 
-# 2. Open monitoring page (macOS auto-opens browser)
-open mmx-monitor.html
-# Windows: start mmx-monitor.html
-# Linux: xdg-open mmx-monitor.html
+# 2. Open browser (macOS auto-opens http://127.0.0.1:9877/)
+open http://127.0.0.1:9877/
+# Windows / Linux: navigate to http://127.0.0.1:9877/ manually
 ```
 
-### Query Quota
+### Load API Key
 
-After the page loads, click **"加载本地凭证"** button (which triggers `confirm()` and `POST /api/load_cred` to read `~/.mmx/config.json` into server process memory), or paste the Key manually into the input box and click **Query**.
+After the page loads, click **"加载本地凭证"** button → confirm → key loads from `~/.mmx/config.json` into server process memory. Or paste your key directly into the input box.
 
 ---
 
-## Security & Data Flow (v1.4.0+)
-
-**This service, by default, will**:
-
-1. **Credential loaded on demand** (v1.6.0) — Does **not** auto-read `~/.mmx/config.json` on startup. Dashboard "加载本地凭证" button + confirm triggers `POST /api/load_cred` which reads the file into server process memory (not browser, not disk). Server restart clears it. Endpoints requiring key return 401 until loaded.
-2. **Poll MiniMax API every 60s** — Calls `https://www.minimaxi.com/v1/token_plan/remains` for quota data.
-3. **Probe inference performance ON DEMAND ONLY** (v1.6.0) — Dashboard button triggers 5 real chat completion requests (×~180 token). Auto timer removed.
-
-**This service will NOT**:
-
-- Auto-read `~/.mmx/config.json` on startup (v1.6.0).
-- Persist your API key in browser localStorage (v1.6.0).
-- Upload your API key to any remote.
-- Allow cross-origin web pages to reach the local server (CORS allowlist limits to `127.0.0.1 / localhost / file://`).
-
-### Startup options
+## Startup Options
 
 ```bash
-# Default config (recommended)
+# Default
 node mmx-monitor-server.js
 
-# Allow header API key passthrough (advanced, your responsibility)
+# Enable X-MMX-API-Key header passthrough (advanced)
 node mmx-monitor-server.js --allow-header-key
+
+# Disable /api/probe endpoint entirely (no inference calls)
+node mmx-monitor-server.js --no-probe
 ```
-
-### Browser-side API Key (v1.6.0+)
-
-**No more localStorage 24h persistence.** Each session requires:
-
-- Manually type Key into the input field; or
-- Click "加载本地凭证" button (loads from `~/.mmx/config.json` to server process memory)
-
-Both are lost when server restarts.
 
 ---
 
 ## Configuration
 
-### mmx Local Config (loaded on demand, v1.6.0+)
+### mmx Local Config (loaded on demand)
 
-The backend **does not auto-read** `~/.mmx/config.json`. Click the dashboard's **"加载本地凭证"** button to explicitly load the API key into server process memory. The key is held only in memory (not written to disk, not returned in HTTP responses), and is cleared on server restart. Endpoints requiring a key return 401 until the user explicitly loads credentials.
+The backend **does not auto-read** `~/.mmx/config.json`. Use the dashboard's **"加载本地凭证"** button to explicitly load the API key into server process memory. The key is held only in memory (not written to disk, not returned in HTTP responses), and is cleared on server restart.
 
 ### Environment Variable (fallback)
 
-If `~/.mmx/config.json` is not present, set this in `.env`:
+If `~/.mmx/config.json` is not present:
 
 ```bash
 # Copy template
@@ -174,41 +92,55 @@ MINIMAX_API_KEY=sk-cp-…here           # MiniMax API Key (Token Plan type)
 
 ---
 
-## File Overview
+## Security & Data Flow
 
-| File | Description |
-|------|-------------|
-| `mmx-monitor.html` | Monitoring page (pure frontend, single HTML file) |
-| `mmx-monitor-server.js` | Local proxy service (Node.js, port 9877) |
-| `history.jsonl` | 24h usage history (v1.5.0+, auto-generated) |
-| `CHANGELOG.md` | Full changelog with cross-version links |
-| `demo.png` | Screenshot |
-| `README.md` | This file (English) |
-| `README_zh.md` | Chinese version (中文版) |
-| `LICENSE` | MIT License |
+**This service, by default, will**:
+
+1. **Load local credentials on demand** — Dashboard's "加载本地凭证" button triggers `POST /api/load_cred` which reads `~/.mmx/config.json` into server process memory (not browser, not disk). Server restart clears it. Endpoints requiring key return 401 until loaded.
+2. **Poll MiniMax API every 60s** — `https://www.minimaxi.com/v1/token_plan/remains` for quota data.
+3. **Write local usage samples** — `<skill-dir>/history.jsonl` is appended on each quota poll (24h ring buffer, contains usage percentages only, no credentials).
+4. **Run inference probe on user demand only** — Dashboard button + `confirm()` triggers `/api/probe` (5 chat completion requests, ~180 tokens).
+
+**This service will NOT**:
+
+- Auto-read `~/.mmx/config.json` on startup.
+- Return the API key in any HTTP response body.
+- Accept empty `Referer` for credential-loading requests.
+- Allow cross-origin web pages to reach the local server.
+- Run the inference probe automatically or on a timer.
 
 ---
 
 ## API Endpoints
 
-Backend provides the following REST endpoints:
-
 | Endpoint | Description |
 |----------|-------------|
-| `POST /api/load_cred` | Load API key from `~/.mmx/config.json` (v1.6.0: user clicks button, confirm dialog) |
+| `POST /api/load_cred` | Load API key from `~/.mmx/config.json` (user-clicks-button, confirm dialog required) |
 | `GET /api/token_plan` | Fetch quota from MiniMax official (requires loaded key) |
-| `GET /api/probe` | On-demand API latency probe (v1.6.0+: user clicks button, confirm dialog, requires loaded key) |
-| `GET /api/history?hours=24` | 24h usage history from local ring buffer (v1.5.0) |
+| `GET /api/probe` | On-demand API latency probe (user-clicks-button, confirm dialog, requires loaded key) |
+| `GET /api/history?hours=24` | 24h usage history from local ring buffer |
 | `GET /health` | Health check |
 
-> `/api/quota` was removed in v1.3.0 (replaced by `/api/token_plan`).
+---
+
+## File Overview
+
+| File | Description |
+|------|-------------|
+| `mmx-monitor.html` | Monitoring page (single-file HTML frontend) |
+| `mmx-monitor-server.js` | Local proxy service (Node.js, port 9877) |
+| `history.jsonl` | 24h usage history ring buffer (auto-generated, gitignored) |
+| `SKILL.md` | Agent skill definition |
+| `CHANGELOG.md` | Full version history |
+| `demo.png` | Dashboard screenshot |
+| `LICENSE` | MIT License |
 
 ---
 
 ## FAQ
 
 **Q: Shows "Connection Failed" after clicking Query?**
-A: Make sure the backend service is running (`node mmx-monitor-server.js`). Frontend prompts "Please start the backend service first" when service is down.
+A: Make sure the backend service is running (`node mmx-monitor-server.js`).
 
 **Q: Port 9877 already in use?**
 A: Stop the process using that port, or modify the `PORT` constant in `mmx-monitor-server.js`.
