@@ -115,7 +115,7 @@ open mmx-monitor.html
 
 ### Query Quota
 
-After the page loads, click the **Query** button above the input box (API Key auto-reads from `~/.mmx/config.json`), or paste the Key manually and query.
+After the page loads, click **"加载本地凭证"** button (which triggers `confirm()` and `POST /api/load_cred` to read `~/.mmx/config.json` into server process memory), or paste the Key manually into the input box and click **Query**.
 
 ---
 
@@ -157,9 +157,9 @@ Both are lost when server restarts.
 
 ## Configuration
 
-### mmx Local Config (auto-read, recommended)
+### mmx Local Config (loaded on demand, v1.6.0+)
 
-Backend auto-reads API Key from `~/.mmx/config.json` — no manual config needed.
+The backend **does not auto-read** `~/.mmx/config.json`. Click the dashboard's **"加载本地凭证"** button to explicitly load the API key into server process memory. The key is held only in memory (not written to disk, not returned in HTTP responses), and is cleared on server restart. Endpoints requiring a key return 401 until the user explicitly loads credentials.
 
 ### Environment Variable (fallback)
 

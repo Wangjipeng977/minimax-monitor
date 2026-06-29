@@ -115,7 +115,7 @@ open mmx-monitor.html
 
 ### 查询配额
 
-页面打开后，点击输入框上方的 **查询** 按钮（API Key 会自动读取本地 mmx 配置），或手动粘贴 Key 后查询。
+页面打开后，点击输入框上方的 **"加载本地凭证"** 按钮（会先弹 confirm 二次确认，调 `POST /api/load_cred` 读 `~/.mmx/config.json` 到 server 进程内存），或在输入框手动粘贴 Key 后点 **查询**。
 
 ---
 
@@ -129,7 +129,7 @@ open mmx-monitor.html
 
 **本服务不会**：
 
-- 启动时自动读取本地凭证（v1.6.0 起改按需）
+- 启动时**不**读取本地凭证（v1.6.0+ 全程按需，必须用户点 "加载本地凭证" 按钮）
 - 把 API key 存到浏览器 localStorage（v1.6.0 起删除）
 - 把 API key 上传到任何远程
 - 允许跨源网页调用本机 server（CORS allowlist 限定 `127.0.0.1 / localhost / file://`）
@@ -157,9 +157,9 @@ Server 重启后必须重新加载（内存不持久）。
 
 ## 配置文件
 
-### mmx 本地配置（自动读取，推荐）
+### mmx 本地配置（按需加载，v1.6.0+）
 
-后端服务会自动读取 `~/.mmx/config.json` 中的 API Key，无需手动配置。
+后端服务**不**自动读取 `~/.mmx/config.json`。需要时点仪表盘顶部的 **"加载本地凭证"** 按钮，触发 `confirm()` 二次确认后才会调用 `POST /api/load_cred` 读取 API key，存入 server 进程内存（不写磁盘、不出现在 HTTP 响应里）。Server 重启后 key 丢失，需要重新点击按钮加载；未加载时所有需要 key 的端点返 401。
 
 ### 环境变量（备选）
 

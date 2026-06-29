@@ -1,4 +1,12 @@
 # Changelog
+## [1.6.2] - 2026-06-29
+
+### Minor update
+
+- **Previous:** 1.6.1
+- **Changed:** v1.6.1 hotfix: 修 load_cred 返 key 真 bug + 拒空 Referer + 补 write:filesystem 声明 + 清理 README 自相矛盾 7 条
+
+
 
 All notable changes to MiniMax Monitor will be documented in this file.
 
@@ -6,6 +14,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.6.1] - 2026-06-29
+
+### Security
+- 🐛 **`/api/load_cred` 响应不再返回 API key**（ClawHub 审计 99% 置信度 finding）。v1.6.0 的响应里包含 `key: k`，**任何能 reach 到本机 server 的进程都能拿到完整 key**——这与 v1.6.0 "响应里不返回 key" 的代码注释直接矛盾，是个真 bug。v1.6.1 改为只回 `keyLength` + `keyPrefix`（前 6 字符，用于视觉确认 `sk-cp-` 前缀），前端 key 输入框改为 `getMmxKey()` 直接从浏览器 fetch 读取本地配置 / 或让用户粘贴，不再依赖 server 中转。
+- 🐛 **`/api/load_cred` 拒绝空 Referer**。v1.6.0 写 `allowedEmpty = !referer`（curl 也能拉 key），违反"按需"叙事。v1.6.1 强制要求 `Referer` 是 `ALLOWED_ORIGINS` 之一，curl 调用请带 `-H 'Referer: http://127.0.0.1:9877/'`。
+- 📝 **SKILL.md permissions 补 `write:filesystem`**。v1.5.0 引入 `history.jsonl` 写入但未声明写权限，审计器抓到"声明 read 实际 write"的权限越界（98% 置信度）。v1.6.1 把 `write:filesystem` 显式加入 frontmatter，并备注"仅限 `<skill-dir>/history.jsonl` 24h 滚动 buffer"。
+
+### Documentation
+- 🧹 **清理 README 自相矛盾**（解决 7 个 finding 的根因）。grep 出所有"自动读取 `~/.mmx/config.json`"的旧表述，**统一改成"按需主动加载"**叙事：
+  - `README.md` L118 改写：原"API Key auto-reads from `~/.mmx/config.json`" → "click '加载本地凭证' button"。
+  - `README.md` L160 整段标题"`mmx Local Config (auto-read, recommended)`" → "(loaded on demand, v1.6.0+)"，正文重写。
+  - `README_zh.md` 同步修复 L118 / L132 / L160-162。
+- 📝 **SKILL.md "Security & Data Flow" 段加 v1.6.1 重写**。明确"按需 + 写 history.jsonl + 不返 key + 不放空 Referer"四条边界，并补"操作风险提示"段（local cred access / 持续出站 / 本地历史文件）。
+- 📝 **SKILL.md 加 history.jsonl 持久化披露**（v1.5.0 引入但未在 Security 段披露，审计器报"未披露的持久化"，86% 置信度）。
+
+### Expected Audit Impact
+- 真问题 5 条全消除：load_cred 返 key / 空 Referer / write 权限未声明 / history 持久化未披露 / env capability 误报（顺带加 `read:env` 注释说明 PORT 来源）。
+- 自相矛盾 7 条预期大部消除：所有"自动读"措辞改成"按需加载"后，审计器应识别为一致叙事。
+- 总 finding 数预期从 13 降到 0-3。
+
 
 ## [1.6.0] - 2026-06-26
 
