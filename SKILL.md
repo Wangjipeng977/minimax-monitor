@@ -6,12 +6,12 @@ description: >
   (3) user wants to test MiniMax inference latency (TTFT / P50 / burst) by clicking "开始速率测试" - explicitly opt-in, NOT background.
 license: MIT
 metadata:
-  version: "1.6.1"
+  version: "1.6.2"
   category: dev-tools
   author: wangjipeng
   sources:
     - https://github.com/MiniMax-AI/skills
-version: 1.6.1
+version: 1.6.2
 permissions:
   - read:filesystem       # ~/.mmx/config.json
   - write:filesystem      # history.jsonl (24h ring buffer, 本技能目录)
@@ -30,7 +30,7 @@ permissions:
 >
 > 启动后自动用 `open` 命令唤起浏览器打开 `http://127.0.0.1:9877/`。
 
-## v1.6.1 主要功能
+## v1.6.2 主要功能
 
 ### 安全
 

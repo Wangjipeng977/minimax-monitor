@@ -5,6 +5,14 @@ All notable changes to MiniMax Monitor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2026-06-29
+
+### Documentation
+- 🧹 SKILL.md 删「## 更新日志」整段（v1.6.0/v1.5.0/v1.4.0/...）— ClawHub 全文渲染不再堆历史
+- 🧹 SKILL.md 删 Security 重复段 + 删冗余「技能简介 / 触发词收敛 / 文件说明 / 使用方式 / 环境变量 / 注意事项」段
+- 🧹 README.md / README_zh.md 重写 — 顶部「Current Version: v1.6.1」+「Features (v1.6.1)」只描述当前版本功能，不堆 Changelog 历史
+- 🧹 CHANGELOG.md 重写 — 保留累积变更（行业惯例），精简每版条目、去掉审计器 finding 编号等内部叙事噪音
+
 ## [1.6.1] - 2026-06-29
 
 ### Security
@@ -86,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 飞书推送（可选）
 - 双层卡片布局（glass-card 玻璃质感）
 
+[1.6.2]: https://github.com/Wangjipeng977/minimax-monitor/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/Wangjipeng977/minimax-monitor/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/Wangjipeng977/minimax-monitor/compare/v1.5.1...v1.6.0
 [1.5.1]: https://github.com/Wangjipeng977/minimax-monitor/compare/v1.5.0...v1.5.1
