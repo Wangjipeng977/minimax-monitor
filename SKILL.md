@@ -11,7 +11,6 @@ metadata:
   author: wangjipeng
   sources:
     - https://github.com/MiniMax-AI/skills
-version: 1.6.2
 permissions:
   - read:filesystem       # ~/.mmx/config.json
   - write:filesystem      # history.jsonl (24h ring buffer, 本技能目录)
@@ -30,7 +29,7 @@ permissions:
 >
 > 启动后自动用 `open` 命令唤起浏览器打开 `http://127.0.0.1:9877/`。
 
-## v1.6.2 主要功能
+## v1.6.3 主要功能
 
 ### 安全
 
