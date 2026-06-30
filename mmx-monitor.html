@@ -296,8 +296,17 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
     // v1.6.0 (F9): 删 localStorage 24h 记忆机制。每次重启重新输入。
     // v1.6.0 (F8): 不再启动自动读 ~/.mmx/config.json。用户点 "加载本地凭证" 按钮才读。
     document.getElementById('btnSave').onclick=function(){
-      var raw=document.getElementById('apiKeyInput').value.trim();
-      if(raw)apiKey=raw;
+      // v1.6.2: 如果之前 "加载本地凭证" 过,input 里的内容是占位符不是真 key,
+      // 不要覆盖内存里的 apiKey;只有用户手动修改过(input 内容被改动)才采用。
+      var inputEl=document.getElementById('apiKeyInput');
+      var raw=inputEl.value.trim();
+      var loaded=inputEl.getAttribute('data-loaded')==='1';
+      if(loaded && raw==='••••••••'){
+        // 占位符 + 已加载标记 → 沿用内存 key,不要覆盖
+      }else if(raw){
+        apiKey=raw;
+        inputEl.removeAttribute('data-loaded');
+      }
       startMon();
     };
     // v1.6.0: "加载本地凭证" 按钮 → confirm → 调 /api/load_cred
@@ -311,8 +320,11 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
         try{
           var d=JSON.parse(xhr.responseText);
           if(xhr.status===200 && d.ok && d.key){
+            // v1.6.2: 加载凭证后 key 只进内存变量,绝不写回 input.value (避免明文 key 落入 DOM,
+            // 防止肩窥/浏览器扩展/UI 自动化/DevTools 等意外捕获)
             apiKey=d.key;
-            document.getElementById('apiKeyInput').value=d.key;
+            document.getElementById('apiKeyInput').value='••••••••'; // 占位符,提示用户已加载
+            document.getElementById('apiKeyInput').setAttribute('data-loaded','1');
             btn.textContent='✅ 已加载';
           }else{
             btn.textContent='❌ '+(d.error||('HTTP '+xhr.status));

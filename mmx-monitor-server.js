@@ -481,14 +481,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && urlPath === '/api/probe') {
     if (requireKeyOrFail(res)) return;
     const referer = req.headers['referer'] || '';
-    // Referer 为空(curl / 本机直连)或不在本机白名单 → 拒绝
-    if (referer) {
-      const ok = ALLOWED_ORIGINS.some(o => o !== 'null' && referer.startsWith(o));
-      if (!ok) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'probe requires Referer from local origin' }));
-        return;
-      }
+    // v1.6.2: 与 load_cred 对齐——Referer 必须存在且命中本机白名单,空 Referer 一律拒绝
+    // (防止 curl/本机直连绕过前端二次确认直接触发真实 API 调用)
+    if (!referer || !ALLOWED_ORIGINS.some(o => o !== 'null' && referer.startsWith(o))) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'probe requires Referer from local origin (e.g. http://127.0.0.1:9877/)' }));
+      return;
     }
     const [probeResult, burstResult, ordinaryResult] = await Promise.all([
       probeApiLatency(apiKey),
