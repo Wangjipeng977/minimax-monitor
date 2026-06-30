@@ -5,6 +5,17 @@ All notable changes to MiniMax Monitor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.6] - 2026-06-30
+
+### Documentation
+- 🐛 删除 SKILL.md frontmatter 顶层残留 `version: 1.6.2` 字段（ClawHub 优先解析顶层 key,导致 v1.6.3+ 发布后页面仍显示 v1.6.2）
+- 🐛 同步 README.md / README_zh.md 顶部 `Current Version` / `当前版本` 行以及 `## Features` / `## 功能` 段标题随发布版本一起更新
+
+## [1.6.5] - 2026-06-30
+
+### Documentation
+- 🐛 SKILL.md `metadata.version` 1.6.3 → 1.6.5（docs-only bump publish 链同步）
+
 ## [1.6.3] - 2026-06-30
 
 ### Security
