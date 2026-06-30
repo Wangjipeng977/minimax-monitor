@@ -5,6 +5,16 @@ All notable changes to MiniMax Monitor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.7] - 2026-06-30
+
+### Bug Fix
+- 🐛 "加载本地凭证" 按钮 success 判断: `d.key` → `d.loaded` (v1.6.1 加固后 server 响应不再回完整 key, 前端必须改用 `loaded` 字段判断成功)
+- 🐛 前端不再持有 key: 新增 `credLoaded` boolean 标记, `fetchQuota` / `doSpeedTest` 不再传 `X-MMX-API-Key` header, server 走 `credLoadedKey` (进程变量) 读 key (与 v1.6.1 "响应不回完整 key" 加固保持一致)
+- 🐛 按钮文本简化: `✅ 已加载 (sk-cp-…)` → `✅ 已加载` (按用户偏好, 不在 UI 显示 key 前缀)
+
+### Documentation
+- 🧹 bump 本地展示位 1.6.6 → 1.6.7 (Current Version / 当前版本 / ## Features / ## 功能 / ## 主要功能 / metadata.version)
+
 ## [1.6.6] - 2026-06-30
 
 ### Documentation
