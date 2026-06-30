@@ -5,7 +5,13 @@ All notable changes to MiniMax Monitor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.2] - 2026-06-30
+## [1.6.3] - 2026-06-30
+
+### Security
+- 🐛 `/api/probe` 拒绝空 `Referer`（之前空 `Referer` 会被静默放行,绕过了本机 origin 二次确认 → curl/本机直连可直接触发真实 API 调用)
+- 🐛 加载本地凭证后,API key 不再写回 `input.value`（之前 key 进入 DOM,password 字段只是 UI 遮罩,肩窥/扩展/DevTools 仍可读）——现在只存内存变量,input 显示占位符,加 `data-loaded="1"` 标记让「查询」按钮识别「已加载」状态不要覆盖
+
+## [1.6.2] - 2026-06-29
 
 ### Security
 - 🐛 `/api/probe` 拒绝空 `Referer`（之前空 `Referer` 会被静默放行,绕过了本机 origin 二次确认 → curl/本机直连可直接触发真实 API 调用)
