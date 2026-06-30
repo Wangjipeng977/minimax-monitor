@@ -6,7 +6,7 @@ description: >
   (3) user wants to test MiniMax inference latency (TTFT / P50 / burst) by clicking "开始速率测试" - explicitly opt-in, NOT background.
 license: MIT
 metadata:
-  version: "1.6.3"
+  version: "1.6.5"
   category: dev-tools
   author: wangjipeng
   sources:
