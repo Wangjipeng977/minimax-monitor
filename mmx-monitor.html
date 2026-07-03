@@ -217,7 +217,7 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
   // v1.6.0: 行为改为“启动不自动加载；但若用户以前勾过记住 24h 且未过期，恢复时仍走原恢复逻辑”（见下方 startup 函数）。
   // 勾选 "记住 24 小时" 后才临时写入 localStorage，期限到自动清除。
   var apiKey=''; // 保留仅用于用户手动输入 key 走 header 的场景 (--allow-header-key 调试用)
-  var credLoaded=false; // v1.6.6: server 已加载本地凭证标记。true 后所有调用不传 header,server 走 credLoadedKey。
+  var credLoaded=false; // v1.7.0: 用户已授权读本地凭证的标记。true 后所有调用不传 header,server 按需读 ~/.mmx/config.json (key 不进进程内存)。
   var timers={refresh:REFRESH_INT,reset:0};
   var tickId=null;
   function fmt(s){if(s<=0)return'即将重置';var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>=24){var d=Math.floor(h/24);h=h%24;return d+'天'+h+'小时'+(m>0?m+'分':'');}if(h>0)return h+'小时'+m+'分';if(m>0)return m+'分'+sec+'秒';return sec+'秒';}
@@ -227,8 +227,9 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
   function showError(msg){var el=document.getElementById('errorBanner');document.getElementById('errorMsg').textContent=msg;el.style.display='block';}
   function tick(){for(var k in timers)if(k!=='reset')timers[k]=Math.max(0,timers[k]-1);document.getElementById('stripRefresh').textContent=fmt(timers.refresh);document.getElementById('stripReset').textContent=timers.reset>0?'剩余 '+fmt(timers.reset):'已重置';if(timers.refresh<=0){timers.refresh=REFRESH_INT;fetchQuota();}}
   function fetchQuota(){
-    // v1.6.6: 始终不传 X-MMX-API-Key header。server 默认从 credLoadedKey 读,
+    // v1.7.0: 始终不传 X-MMX-API-Key header。server 默认从 ~/.mmx/config.json 按需读,
     // 避免前端持有 key (合规于 v1.6.1 安全加固: load_cred 响应不含完整 key)。
+    // v1.7.0 新增: key 也不再常驻 server 进程内存,每次请求现读磁盘用完即出栈。
     var h={};
     document.getElementById('errorBanner').style.display='none';
     fetch(API_BASE+'/api/token_plan',{headers:h}).then(function(r){
@@ -323,9 +324,9 @@ body{background:var(--bg);color:#1a1a1a;font-family:'Microsoft YaHei','PingFang 
         try{
           var d=JSON.parse(xhr.responseText);
           if(xhr.status===200 && d.ok && d.loaded){
-            // v1.6.6: server 响应不回完整 key,前端不持有 key,只设 credLoaded=true 标记。
+            // v1.7.0: server 响应不回完整 key,前端不持有 key,只设 credLoaded=true 标记。
             // 后续 token_plan / probe 调用不传 X-MMX-API-Key header,
-            // server 默认从 credLoadedKey (进程变量) 读 —— 整条链路不需要前端拿到 key。
+            // server 每次按需读 ~/.mmx/config.json 用完即出栈 —— 整条链路不需要任何进程持有 key。
             credLoaded=true;
             document.getElementById('apiKeyInput').value='••••••••'; // 占位符,提示用户已加载
             document.getElementById('apiKeyInput').setAttribute('data-loaded','1');

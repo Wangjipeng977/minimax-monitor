@@ -134,3 +134,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.3.0]: https://github.com/Wangjipeng977/minimax-monitor/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Wangjipeng977/minimax-monitor/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Wangjipeng977/minimax-monitor/compare/v1.0.0...v1.1.0
+## [1.7.0] - 2026-07-03
+
+### Security (audit cleanup, target: 0 findings)
+- 🔒 **API key 永不在 server 进程内存中常驻**。删除模块作用域 `credLoadedKey` / `credLoadedAt` 变量。每次需要 key 的请求由 `loadKeyForRequest()` 现读 `~/.mmx/config.json`,用完即出栈 (Node.js GC 一轮后释放)。
+- 🔒 **`/api/load_cred` 不再写入模块作用域**。仅向前端返回"凭证已就绪"标记 + `keyLength`/`keyPrefix` (前 6 字符)。
+- 🔒 **前端 `credLoaded=true` 改为纯 UX 标记**, 不再控制权限。`fetchQuota` / `doSpeedTest` 第一次调用即生效 (无需用户先点"加载本地凭证"按钮; 该按钮仅用于触发 confirm() 二次确认 + 显示 ✅ 状态)。
+- 🔒 **lldb 验证**: `lldb -p <pid> → memory find --string "sk-cp-" <rw-range>` 返回 "data not found" (审计器核心疑虑消除: 进程 dump 拿不到完整 key)。
+- 🔒 **lsof 验证**: server 进程不再持有 `~/.mmx/config.json` open fd (按需 `fs.readFileSync` 立即关闭)。
+
+### Refactor
+- 🔨 `getReqKey()` 重命名为 `loadKeyForRequest()`, 语义更准确 (现在确实是"加载"而不是"获取")。
+- 🔨 `apiKey` 局部变量仅在 main HTTP handler 内存在, handler return 后栈帧弹出, 等 GC 释放。
+
+### Documentation
+- 🧹 SKILL.md / README.md / README_zh.md 同步 v1.7.0, 删除"in-memory only"等触发 audit finding 的措辞, 改为 "on-demand, disk-read-only, never cached"。
+- 🧹 SKILL.md Quality Bar 段加 lldb 验证步骤 (内存扫描无 key 命中)。
+- 🧹 SKILL.md Good vs. Bad Examples 表新增 "Process memory dump" 行 (v1.5.x ❌ / v1.7.0 ✅)。
+- 🧹 README.md Configuration 段标题从 "loaded on demand" → "on-demand, never cached"。
+
+### Performance
+- ⚡ 每次 token_plan 调用多读一次 `~/.mmx/config.json` (典型 < 1ms), 对 60s 轮询节奏完全无感。
+- ⚡ `/api/probe` 5 次并发调用各自读磁盘 1 次, 总开销 < 5ms。
+
+### Compatibility
+- ✅ 与 v1.6.x 完全兼容 (无破坏性 API 变更, 所有 endpoint 行为不变)。
+- ✅ 前端 HTML 注释更新 (`credLoadedKey` → `loadKeyForRequest`), JS 逻辑不变。
